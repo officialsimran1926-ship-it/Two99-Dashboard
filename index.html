@@ -1855,6 +1855,15 @@ function doLogin() {
   if(clockedIn) { updateDuration(); }
   generateNotifs();
   renderAll();
+
+  // Extra onLogin hooks
+  if(currentUser && currentUser.isAdmin) {
+    const af = document.getElementById('admin-announce-form');
+    if(af) af.style.display = 'block';
+  }
+  checkAndSendAttendanceReports();
+  checkTodayCelebrations();
+  seedAnnouncements();
 }
 
 function doLogout() {
@@ -1890,19 +1899,21 @@ function showPage(page, navEl) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const pg = document.getElementById('page-'+page);
   if(pg) pg.classList.add('active');
-
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if(navEl) navEl.classList.add('active');
-
-  const [title, sub] = PAGE_INFO[page] || [page,''];
-  document.getElementById('page-title').textContent = title;
-  document.getElementById('page-sub').textContent = sub;
-
+  const info = PAGE_INFO[page] || [page, ''];
+  document.getElementById('page-title').textContent = info[0];
+  document.getElementById('page-sub').textContent = info[1];
   if(page==='analytics') renderAnalytics();
   if(page==='profile') renderProfile();
   if(page==='admin') renderAdmin();
   if(page==='documents') renderDocs();
   if(page==='attendance') renderAttendanceHistory();
+  if(page==='leaves') { renderLeaveBalances(); renderLeaveHistory(); }
+  if(page==='holidays') renderHolidays();
+  if(page==='celebrations') renderCelebrations();
+  if(page==='chat') initChat();
+  if(page==='announcements') { seedAnnouncements(); renderAnnouncements(); }
 }
 
 // ═══════════════════ RENDER ═══════════════════
@@ -2757,22 +2768,11 @@ function closePolicyModal() {
 // ═══════════════════ PATCH PAGE ROUTING ═══════════════════
 const _origShowPage = showPage;
 // Override PAGE_INFO to add new pages
-PAGE_INFO['leaves']   = ['Leaves',            'Your leave balances and applications'];
-PAGE_INFO['holidays'] = ['Holiday Calendar',   '2026–27 declared holidays'];
 
-const _origShowPageBase = window.showPage;
-window.showPage = function(page, navEl) {
-  _origShowPage(page, navEl);
-  if (page === 'leaves')   { renderLeaveBalances(); renderLeaveHistory(); }
-  if (page === 'holidays') { renderHolidays(); }
-};
+
 
 // ═══════════════════ CHECK ATTENDANCE REPORTS ON LOGIN ═══════════════════
-const _origDoLogin = window.doLogin;
-window.doLogin = function() {
-  _origDoLogin();
-  setTimeout(checkAndSendAttendanceReports, 2000);
-};
+
 
 
 // ═══════════════════ APRIL 2026 DATA ═══════════════════
@@ -3042,29 +3042,12 @@ function renderAttendanceAdmin() {
 }
 
 // ═══════════════════ PATCH PAGE_INFO & showPage ═══════════════════
-PAGE_INFO['announcements'] = ['Announcements', 'Company news and updates'];
 PAGE_INFO['admin'] = ['Admin Dashboard', 'Team overview, performance analytics, April tasks'];
 
-const __origShowPage = window.showPage;
-window.showPage = function(page, navEl) {
-  __origShowPage(page, navEl);
-  if (page === 'announcements') { seedAnnouncements(); renderAnnouncements(); }
-  if (page === 'admin') { renderAdmin(); }
-};
+
 
 // Show announce form for admins
-const __origDoLogin = window.doLogin;
-window.doLogin = function() {
-  __origDoLogin();
-  setTimeout(() => {
-    seedAnnouncements();
-    if (currentUser && currentUser.isAdmin) {
-      const af = document.getElementById('admin-announce-form');
-      if (af) af.style.display = 'block';
-    }
-    checkAndSendAttendanceReports();
-  }, 500);
-};
+
 
 // ═══════════════════ PATCH renderAdmin ═══════════════════
 window.renderAdmin = function() {
@@ -3089,7 +3072,7 @@ window.renderAdmin = function() {
       <div class="emp-stats">
         <div class="emp-stat"><div class="val" style="color:${c}">${aprilRows.length}</div><div class="lbl">Apr Tasks</div></div>
         <div class="emp-stat"><div class="val" style="color:var(--green)">${done}</div><div class="lbl">Done</div></div>
-        <div class="emp-stat"><div class="val" style="color:${rate>=70?'var(--green)':rate>=40?'var(--amber)':'var(--red)}">${rate}%</div><div class="lbl">Rate</div></div>
+        <div class="emp-stat"><div class="val" style="color:${rate>=70?'var(--green)':rate>=40?'var(--amber)':'var(--red)'}">${rate}%</div><div class="lbl">Rate</div></div>
       </div>
       <div style="margin-top:10px;height:4px;background:var(--bg3);border-radius:2px;">
         <div style="height:100%;width:${rate}%;background:${c};border-radius:2px;transition:width .5s;"></div>
@@ -3467,15 +3450,8 @@ document.addEventListener('click', e => {
 });
 
 // ═══════════════════ PATCH PAGE_INFO & showPage ═══════════════════
-PAGE_INFO['celebrations'] = ['Celebrations 🎉', 'Birthdays, work anniversaries & marriage anniversaries'];
-PAGE_INFO['chat'] = ['Team Chat 💬', 'Real-time team messaging — powered by your workspace'];
 
-const ___origShowPage = window.showPage;
-window.showPage = function(page, navEl) {
-  ___origShowPage(page, navEl);
-  if (page === 'celebrations') renderCelebrations();
-  if (page === 'chat') initChat();
-};
+
 
 // Auto-show birthday notification on login
 function checkTodayCelebrations() {
@@ -3506,14 +3482,7 @@ function checkTodayCelebrations() {
 }
 
 // Patch doLogin to add celebration check and chat init
-const ____origDoLogin = window.doLogin;
-window.doLogin = function() {
-  ____origDoLogin();
-  setTimeout(() => {
-    checkTodayCelebrations();
-    checkAndSendAttendanceReports();
-  }, 800);
-};
+
 
 // ═══════════════════ START ═══════════════════
 init();
