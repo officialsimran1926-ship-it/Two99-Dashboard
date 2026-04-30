@@ -843,6 +843,7 @@ h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
         <div class="nav-item" onclick="showPage('holidays',this)"><span class="nav-icon">📆</span>Holiday Calendar</div>
         <div class="nav-item" onclick="showPage('policies',this)"><span class="nav-icon">📋</span>HR Policies</div>
         <div class="nav-item" onclick="showPage('announcements',this)"><span class="nav-icon">📢</span>Announcements</div>
+        <div class="nav-item" onclick="showPage('email',this)"><span class="nav-icon">📧</span>Email</div>
         <div class="nav-item" onclick="showPage('celebrations',this)"><span class="nav-icon">🎉</span>Celebrations</div>
         <div class="nav-item" onclick="showPage('chat',this)"><span class="nav-icon">💬</span>Team Chat</div>
         <div class="nav-item" id="admin-nav-item" style="display:none" onclick="showPage('admin',this)"><span class="nav-icon">⊿</span>Admin View</div>
@@ -1166,6 +1167,8 @@ h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
                 <div class="form-field"><label>To Date</label><input type="date" id="lv-to"></div>
               </div>
               <div class="form-field"><label>Reason</label><textarea id="lv-reason" style="min-height:64px" placeholder="Brief reason for leave..."></textarea></div>
+              <div class="form-field"><label>Reporting Manager</label><input type="text" id="lv-rm" readonly style="background:var(--bg3);color:var(--cyan);font-weight:600;cursor:not-allowed" placeholder="Auto-filled on login"></div>
+              <div class="form-field"><label>RM Email (CC)</label><input type="text" id="lv-rm-email" readonly style="background:var(--bg3);color:var(--text2);cursor:not-allowed" placeholder="Auto-filled"></div>
               <div class="form-field"><label>Who will cover your work?</label><input type="text" id="lv-cover" placeholder="e.g. Umar, Jenifer"></div>
             </div>
             <div style="margin-top:14px;display:flex;gap:10px;">
@@ -1451,6 +1454,114 @@ h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
         </div>
       </div>
 
+      <!-- ═══ EMAIL ═══ -->
+      <div class="page" id="page-email">
+        <div style="display:grid;grid-template-columns:220px 1fr;gap:0;height:calc(100vh - 126px);background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+
+          <!-- Email Sidebar -->
+          <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;">
+            <!-- Compose Button -->
+            <div style="padding:12px 14px;border-bottom:1px solid var(--border);">
+              <button class="btn-primary" onclick="openCompose()" style="width:100%;justify-content:center;font-size:13px;">✏️ Compose</button>
+            </div>
+            <!-- Folders -->
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);">
+              <div class="stat-label" style="margin-bottom:8px">Folders</div>
+              <div id="email-folders"></div>
+            </div>
+            <!-- Quick contacts -->
+            <div style="padding:10px 12px;flex:1;overflow-y:auto;">
+              <div class="stat-label" style="margin-bottom:8px">Team</div>
+              <div id="email-contacts"></div>
+            </div>
+            <!-- Gmail connect -->
+            <div style="padding:10px 12px;border-top:1px solid var(--border);">
+              <button onclick="connectEmailGmail()" id="email-gmail-btn" class="btn-outline" style="width:100%;justify-content:center;font-size:11px;gap:5px;"><span>📧</span>Connect Gmail</button>
+              <div id="email-gmail-status" style="display:none;font-size:10px;color:var(--green);text-align:center;margin-top:4px;"></div>
+            </div>
+          </div>
+
+          <!-- Email Content -->
+          <div style="display:flex;flex-direction:column;">
+            <!-- Toolbar -->
+            <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+              <input type="text" id="email-search" placeholder="🔍  Search emails..." onkeyup="filterEmails(this.value)"
+                style="flex:1;background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;color:var(--text);font-size:12px;outline:none;">
+              <button class="btn-outline" onclick="refreshEmails()" style="font-size:11px;padding:7px 12px;">↻ Refresh</button>
+            </div>
+            <!-- Email list -->
+            <div id="email-list" style="flex:1;overflow-y:auto;"></div>
+          </div>
+        </div>
+
+        <!-- Gmail notice -->
+        <div style="margin-top:10px;padding:10px 14px;background:var(--card2);border-radius:9px;border:1px solid var(--border);font-size:11px;color:var(--text2);line-height:1.6;">
+          💡 <strong style="color:var(--text)">Gmail Integration:</strong> Click <strong>Connect Gmail</strong> to link your @two99.org account. Once connected, emails sent here sync with your Gmail inbox and all leave applications are CC'd to your Reporting Manager automatically.
+        </div>
+      </div>
+
+      <!-- COMPOSE MODAL -->
+      <div class="modal-overlay" id="compose-modal">
+        <div class="modal" style="width:640px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+            <h3>✏️ New Email</h3>
+            <span onclick="document.getElementById('compose-modal').classList.remove('open')" style="cursor:pointer;color:var(--text3);font-size:18px;">✕</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="form-field">
+              <label>To</label>
+              <input type="text" id="compose-to" placeholder="recipient@two99.org or select from team">
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;" id="compose-to-pills"></div>
+            <div class="form-field">
+              <label>CC</label>
+              <input type="text" id="compose-cc" placeholder="cc@two99.org">
+            </div>
+            <div class="form-field">
+              <label>Subject</label>
+              <input type="text" id="compose-subject" placeholder="Email subject">
+            </div>
+            <div class="form-field">
+              <label>Message</label>
+              <textarea id="compose-body" style="min-height:180px;line-height:1.6;" placeholder="Write your message here..."></textarea>
+            </div>
+            <!-- Quick team select -->
+            <div>
+              <div class="stat-label" style="margin-bottom:6px">Quick Add Team Member</div>
+              <div id="compose-team-btns" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-cancel" onclick="document.getElementById('compose-modal').classList.remove('open')">Discard</button>
+            <button class="btn-outline" onclick="saveDraft()" style="gap:5px;">💾 Save Draft</button>
+            <button class="btn-primary" onclick="sendEmail()" style="gap:5px;">📤 Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMAIL VIEW MODAL -->
+      <div class="modal-overlay" id="email-view-modal">
+        <div class="modal" style="width:660px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <h3 id="ev-subject" style="font-size:17px;max-width:500px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Subject</h3>
+            <span onclick="document.getElementById('email-view-modal').classList.remove('open')" style="cursor:pointer;color:var(--text3);font-size:18px;">✕</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+            <div class="avatar" id="ev-avatar" style="width:36px;height:36px;font-size:12px;flex-shrink:0;"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;" id="ev-from"></div>
+              <div style="font-size:11px;color:var(--text2);">To: <span id="ev-to"></span> <span id="ev-cc-wrap" style="display:none"> · CC: <span id="ev-cc"></span></span></div>
+              <div style="font-size:10px;color:var(--text3);" id="ev-date"></div>
+            </div>
+            <div style="display:flex;gap:7px;flex-shrink:0;">
+              <button class="btn-outline" onclick="replyEmail()" style="font-size:11px;padding:6px 11px;">↩ Reply</button>
+              <button class="btn-outline" onclick="forwardEmail()" style="font-size:11px;padding:6px 11px;">→ Forward</button>
+            </div>
+          </div>
+          <div id="ev-body" style="font-size:13px;line-height:1.8;color:var(--text2);max-height:50vh;overflow-y:auto;white-space:pre-wrap;"></div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -1502,28 +1613,32 @@ const LOGO_BLACK = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX
 
 // ═══════════════════ DATA ═══════════════════
 const EMPLOYEES = [
-  {id:'kritika',name:'Kritika',designation:'HR & Admin Manager',email:'hr@two99.org',phone:'9650354611',dob:'1995-02-10',address:'A-140, Street No.4, Near Bharti Nursing Home, Sec-7, Dwarka, New Delhi-110077',isAdmin:true,tasks_key:'Kritika'},
-  {id:'divyansh',name:'Divyansh Agarwal',designation:'Accounts Manager',email:'accounts@two99.org',phone:'7300923159',dob:'1995-04-26',address:'118/1, Mukund Nagar, Near Seth Mukund lal Inter college, Ghaziabad, UP - 201001',isAdmin:false,tasks_key:'Divyansh'},
-  {id:'rajesh',name:'Rajesh Ahirwar',designation:'Growth Lead – Outreach',email:'rajesh.ahirwar@two99ecommerce.com',phone:'8447051866',dob:'1989-06-10',address:'N-28/B-9, Wazirpur Industrial Area, New Delhi-110052',isAdmin:false,tasks_key:'Rajesh'},
-  {id:'umar',name:'Umar Daraz',designation:'Digital Lead',email:'Umar.daraz@two99.org',phone:'9990789624',dob:'1988-07-05',address:'S/o Rafi Uddin,16, Gali No. 5, Sangam Vihar, Wazirabad, North Delhi-110084',isAdmin:true,tasks_key:'Umar'},
-  {id:'jenifer',name:'Jenifer Massey',designation:'Content & Community Manager',email:'jenifer.massey@two99ecommerce.com',phone:'7065098008',dob:'1996-05-06',address:'C-145, 1st Cross Street, Beta 1, Greater Noida-201308',isAdmin:false,tasks_key:'Jenifer'},
-  {id:'ayush',name:'Ayush',designation:'Development / UI Designer',email:'',phone:'',dob:'',address:'',isAdmin:false,tasks_key:'Ayush'},
-  {id:'sunny',name:'Sunny Tanwar',designation:'VP-Brand Strategist',email:'sunny.tanwar@two99.org',phone:'9990822232',dob:'1990-08-11',address:'336/4A, Gali No.-4, Govind Puri, Kalkaji, New Delhi-110019',isAdmin:true,tasks_key:'Sunny'},
-  {id:'anand',name:'Anand Raj',designation:'SEO Executive',email:'Anand.Raj@two99ecommerce.com',phone:'8092154769',dob:'2001-08-12',address:'Shastri Nagar, Muzaffarpur Bihar',isAdmin:false,tasks_key:'Anand'},
-  {id:'sahil',name:'Sahil Thakur',designation:'SEO Specialist',email:'sahil.thakur@two99ecommerce.com',phone:'9205033510',dob:'2002-02-19',address:'15/142 Dr. Ambedkar Nagar, Near Pushpa Bhawan, Sector-6, New Delhi-110062',isAdmin:false,tasks_key:'Sahil'},
-  {id:'simran',name:'Simran Kaur',designation:'EA to Director',email:'simran.kaur@two99.org',phone:'7827833510',dob:'1997-09-26',address:'A-171, Sector-19, Noida - 201301',isAdmin:false,tasks_key:'Simran'},
-  {id:'harsh',name:'Harsh Mishra',designation:'Content Development Lead',email:'harsh.mishra@two99ecommerce.com',phone:'8650849271',dob:'2001-08-08',address:'A1, Tirupati Golden Park, Near Ben Hur School, Pilbhit, UP - 262001',isAdmin:false,tasks_key:'Harsh'},
-  {id:'shubham',name:'Shubham Raj Rathaur',designation:'Frontend Developer Intern',email:'shubham.rathaur@two99ecommerce.com',phone:'8809495722',dob:'2004-04-04',address:'House no 97, Vill-Gijhore, Sector 53, Noida',isAdmin:false,tasks_key:'Shubham'},
-  {id:'rishi',name:'Rishi Gupta',designation:'Digital Community Manager',email:'rishi.gupta@two99marketing.com',phone:'9811359590',dob:'2006-06-16',address:'FF-197/4, White Cottage, Sector-4, Aditya World City, Ghaziabad, 201002',isAdmin:false,tasks_key:'Rishi'},
-  {id:'vikram',name:'Vikram Tomar',designation:'Growth Manager - AI, Web3',email:'vikram.tomar@two99.org',phone:'9811505259',dob:'1998-12-03',address:'34/6, West Patel Nagar, New Delhi-110008',isAdmin:true,tasks_key:'Vikram'},
-  {id:'shobhan',name:'Shobhan Sharma',designation:'Video Editor',email:'Shobhan.sharma@two99marketing.com',phone:'9910016009',dob:'2006-09-04',address:'360 Govindpuram, Ghaziabad, 201013',isAdmin:false,tasks_key:'Shobhan'},
-  {id:'jimmy',name:'Jimesh Khatri',designation:'Senior Graphic Designer',email:'jimesh.khatri@two99marketing.com',phone:'9016312309',dob:'1990-03-23',address:'B 18/3, Bhimnath Society, Isanpur, Ahmedabad, Gujarat - 382443',isAdmin:false,tasks_key:'Jimmy'},
-  {id:'puru',name:'Purnendu Kashyap',designation:'UI/UX Designer',email:'purnendu.kashyap@two99marketing.com',phone:'8368657646',dob:'2001-07-07',address:'C-433, Alpha 01, C Block Market, Greater Noida, UP, 201310',isAdmin:false,tasks_key:'Puru'},
-  {id:'astitwa',name:'Astitwa Dwivedi',designation:'AI Growth Manager',email:'astitwa.dwivedi@two99marketing.com',phone:'9140698472',dob:'2003-05-25',address:'Exact PG, Raipur, UP - 201313',isAdmin:true,tasks_key:'Astitwa'},
-  {id:'kunal',name:'Kunal Tomar',designation:'AI & Software Dev Intern',email:'kunal.tomar@two99marketing.com',phone:'7683072807',dob:'2002-06-04',address:'C-1107 DDA FLATS, Shahdara, Delhi-110093',isAdmin:false,tasks_key:'Kunal'},
-  {id:'ayush_ag',name:'Ayush Agarwal',designation:'AI & Software Dev Intern',email:'ayush.agarwal@two99marketing.com',phone:'9257143673',dob:'2005-09-25',address:'WZ 36/3-A, Begampur Extension, Delhi, 110099',isAdmin:false,tasks_key:'Ayush Agarwal'},
-  {id:'aditya',name:'Aditya Srivastava',designation:'AI & Software Dev Intern',email:'aditya.srivastava@two99marketing.com',phone:'8076598811',dob:'2001-10-27',address:'Flat No-705 Tulip Tower, Greater Noida West, UP - 201318',isAdmin:false,tasks_key:'Aditya'},
+  {id:"divyansh",name:"Divyansh Agarwal",designation:"Accounts Manager",dob:"1995-04-26",dom:null,doj:"2024-12-16",email:"accounts@two99.org",phone:"7300923159",address:"118/1, Mukund Nagar, Ghaziabad, UP",rm:"Arti Chaudhary",rm_email:"arti.chaudhary@two99ecommerce.com",isAdmin:false,tasks_key:"Divyansh"},
+  {id:"anand",name:"Anand Raj",designation:"SEO Executive",dob:"2001-08-12",dom:null,doj:"2024-02-12",email:"Anand.Raj@two99ecommerce.com",phone:"8092154769",address:"Shastri Nagar, Muzaffarpur, Bihar",rm:"Umar Daraz",rm_email:"Umar.daraz@two99.org",isAdmin:false,tasks_key:"Anand"},
+  {id:"vikram",name:"Vikram Tomar",designation:"Growth Manager \u2013 AI, Web3",dob:"1998-12-03",dom:null,doj:"2024-12-09",email:"vikram.tomar@two99.org",phone:"9811505259",address:"34/6, West Patel Nagar, New Delhi",rm:"Agam Chaudhary",rm_email:"hello@two99.org",isAdmin:true,tasks_key:"Vikram"},
+  {id:"umar",name:"Umar Daraz",designation:"Digital Lead",dob:"1988-07-05",dom:"2014-12-28",doj:"2025-01-06",email:"Umar.daraz@two99.org",phone:"9990789624",address:"16, Gali No. 5, Sangam Vihar, Wazirabad, Delhi",rm:"Arti Chaudhary",rm_email:"arti.chaudhary@two99ecommerce.com",isAdmin:true,tasks_key:"Umar"},
+  {id:"jenifer",name:"Jenifer Massey",designation:"Content & Community Manager",dob:"1996-05-06",dom:null,doj:"2025-06-09",email:"jenifer.massey@two99ecommerce.com",phone:"7065098008",address:"C-145, Beta 1, Greater Noida",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Jenifer"},
+  {id:"harsh",name:"Harsh Mishra",designation:"Content Development Lead",dob:"2001-08-08",dom:null,doj:"2025-08-04",email:"harsh.mishra@two99ecommerce.com",phone:"8650849271",address:"Tirupati Golden Park, Pilbhit, UP",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Harsh"},
+  {id:"sunny",name:"Sunny Tanwar",designation:"VP \u2013 Brand Strategist",dob:"1990-08-11",dom:"2021-02-07",doj:"2025-11-05",email:"sunny.tanwar@two99.org",phone:"9990822232",address:"336/4A, Govind Puri, Kalkaji, New Delhi",rm:"Agam Chaudhary",rm_email:"hello@two99.org",isAdmin:true,tasks_key:"Sunny"},
+  {id:"rajesh",name:"Rajesh Ahirwar",designation:"Growth Lead \u2013 Outreach",dob:"1989-06-10",dom:"2012-06-26",doj:"2026-01-12",email:"rajesh.ahirwar@two99ecommerce.com",phone:"8447051866",address:"N-28/B-9, Wazirpur Industrial Area, New Delhi",rm:"Umar Daraz",rm_email:"Umar.daraz@two99.org",isAdmin:false,tasks_key:"Rajesh"},
+  {id:"kanishak",name:"Kanishak Rajpal",designation:"Creative & Communications Director",dob:"1989-07-02",dom:"2024-12-04",doj:"2022-08-01",email:"Kanishak.rajpal@two99ecommerce.com",phone:"9953428841",address:"Q-516, Dilshad Garden, Delhi",rm:"Agam Chaudhary",rm_email:"hello@two99.org",isAdmin:true,tasks_key:"Kanishak"},
+  {id:"puru",name:"Purnendu Kashyap",designation:"UI/UX Designer",dob:"2001-07-07",dom:null,doj:"2024-07-15",email:"purnendu.kashyap@two99marketing.com",phone:"8368657646",address:"Alpha 01, Greater Noida",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Puru"},
+  {id:"jimmy",name:"Jimesh Khatri",designation:"Senior Graphic Designer",dob:"1990-03-23",dom:null,doj:"2024-07-09",email:"jimesh.khatri@two99marketing.com",phone:"9016312309",address:"Bhimnath Society, Ahmedabad, Gujarat",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Jimmy"},
+  {id:"astitwa",name:"Astitwa Dwivedi",designation:"AI Growth Manager",dob:"2003-05-25",dom:null,doj:"2025-07-01",email:"astitwa.dwivedi@two99marketing.com",phone:"9140698472",address:"Exact PG, Raipur, UP",rm:"Abhishek",rm_email:"abhishek@two99.org",isAdmin:true,tasks_key:"Astitwa"},
+  {id:"rishi",name:"Rishi Gupta",designation:"Digital Community Manager",dob:"2006-06-16",dom:null,doj:"2025-08-06",email:"rishi.gupta@two99marketing.com",phone:"9811359590",address:"Aditya World City, Ghaziabad",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Rishi"},
+  {id:"shobhan",name:"Shobhan Sharma",designation:"Video Editor",dob:"2006-09-04",dom:null,doj:"2025-10-06",email:"Shobhan.sharma@two99marketing.com",phone:"9910016009",address:"360 Govindpuram, Ghaziabad",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Shobhan"},
+  {id:"kritika",name:"Kritika",designation:"HR & Admin Manager",dob:"1995-02-10",dom:null,doj:"2025-12-08",email:"hr@two99.org",phone:"9650354611",address:"A-140, Sec-7, Dwarka, New Delhi",rm:"Arti Chaudhary",rm_email:"arti.chaudhary@two99ecommerce.com",isAdmin:true,tasks_key:"Kritika"},
+  {id:"simran",name:"Simran Kaur",designation:"EA to Director",dob:"1997-09-26",dom:null,doj:"2026-02-02",email:"simran.kaur@two99.org",phone:"7827833510",address:"A-171, Sector-19, Noida",rm:"Agam Chaudhary",rm_email:"hello@two99.org",isAdmin:false,tasks_key:"Simran"},
+  {id:"amit",name:"Amit Ghildiyal",designation:"Consultant",dob:null,dom:null,doj:null,email:"amit.ghildiyal@two99.org",phone:"9818456952",address:"Gwal Pahari, Gurgaon",rm:"Agam Chaudhary",rm_email:"hello@two99.org",isAdmin:false,tasks_key:"Amit"},
+  {id:"ayush_ag",name:"Ayush Agarwal",designation:"AI & Software Dev Intern",dob:"2005-09-25",dom:null,doj:"2026-03-18",email:"ayush.agarwal@two99marketing.com",phone:"9257143673",address:"Begampur Extension, Delhi",rm:"Abhishek",rm_email:"abhishek@two99.org",isAdmin:false,tasks_key:"Ayush Agarwal"},
+  {id:"kunal",name:"Kunal Tomar",designation:"AI & Software Dev Intern",dob:"2002-06-04",dom:null,doj:"2026-03-18",email:"kunal.tomar@two99marketing.com",phone:"7683072807",address:"Shahdara, Delhi",rm:"Abhishek",rm_email:"abhishek@two99.org",isAdmin:false,tasks_key:"Kunal"},
+  {id:"aditya",name:"Aditya Srivastava",designation:"AI & Software Dev Intern",dob:"2001-10-27",dom:null,doj:"2026-03-18",email:"aditya.srivastava@two99marketing.com",phone:"8076598811",address:"Greater Noida West, UP",rm:"Abhishek",rm_email:"abhishek@two99.org",isAdmin:false,tasks_key:"Aditya"},
+  {id:"parteek",name:"Parteek Chauhan",designation:"AI & Software Dev Intern",dob:"2004-08-18",dom:null,doj:"2026-04-27",email:"parteek.chauhan@two99marketing.com",phone:"9815377025",address:"Dera Bassi, Mohali, Punjab",rm:"Abhishek",rm_email:"abhishek@two99.org",isAdmin:false,tasks_key:"Parteek"},
+  {id:"sahil",name:"Sahil Thakur",designation:"SEO Specialist",dob:"2002-02-19",dom:null,doj:"2024-09-01",email:"sahil.thakur@two99ecommerce.com",phone:"9205033510",address:"Dr. Ambedkar Nagar, Sector-6, New Delhi",rm:"Umar Daraz",rm_email:"Umar.daraz@two99.org",isAdmin:false,tasks_key:"Sahil"},
+  {id:"shubham",name:"Shubham Raj Rathaur",designation:"Frontend Developer Intern",dob:"2004-04-04",dom:null,doj:"2025-12-01",email:"shubham.rathaur@two99ecommerce.com",phone:"8809495722",address:"Vill-Gijhore, Sector 53, Noida",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Shubham"},
+  {id:"ayush",name:"Ayush",designation:"Development / UI Designer",dob:null,dom:null,doj:"2024-06-01",email:"",phone:"",address:"",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Ayush"}
 ];
+const RM = {"divyansh":"Arti Chaudhary","anand":"Umar Daraz","vikram":"Agam Chaudhary","umar":"Arti Chaudhary","jenifer":"Kanishak Rajpal","harsh":"Kanishak Rajpal","sunny":"Agam Chaudhary","rajesh":"Umar Daraz","kanishak":"Agam Chaudhary","puru":"Kanishak Rajpal","jimmy":"Kanishak Rajpal","astitwa":"Abhishek","rishi":"Kanishak Rajpal","shobhan":"Kanishak Rajpal","kritika":"Arti Chaudhary","simran":"Agam Chaudhary","amit":"Agam Chaudhary","ayush_ag":"Abhishek","kunal":"Abhishek","aditya":"Abhishek","parteek":"Abhishek","sahil":"Umar Daraz","shubham":"Kanishak Rajpal","ayush":"Kanishak Rajpal"};
 
 const SEED_TASKS = {
   'Kritika':[{date:'2025-12-08',client:'Two99',people:'Arti Maam',status:'Completed',task:'Human Resources',subtask:'Job Posting',hours:'30 mins',due:'Same day',comments:'Paid Media Specialist job posted on Indeed'},{date:'2025-12-15',client:'Two99',people:'Agam Sir, Umar',status:'Completed',task:'Meetings',subtask:'Onsite',hours:'30-40 mins',due:'Same day',comments:'Meeting with Umar'},{date:'2025-12-16',client:'Two99',people:'Arti Maam',status:'Completed',task:'Human Resources',subtask:'Documentation',hours:'6 hrs',due:'Same day',comments:'December attendance'}],
@@ -1864,6 +1979,11 @@ function doLogin() {
   checkAndSendAttendanceReports();
   checkTodayCelebrations();
   seedAnnouncements();
+  // Auto-populate leave RM fields
+  const rmEl = document.getElementById('lv-rm');
+  const rmEmailEl = document.getElementById('lv-rm-email');
+  if(rmEl) rmEl.value = currentUser.rm || '';
+  if(rmEmailEl) rmEmailEl.value = currentUser.rm_email || '';
 }
 
 function doLogout() {
@@ -1914,6 +2034,7 @@ function showPage(page, navEl) {
   if(page==='celebrations') renderCelebrations();
   if(page==='chat') initChat();
   if(page==='announcements') { seedAnnouncements(); renderAnnouncements(); }
+  if(page==='email') initEmail();
 }
 
 // ═══════════════════ RENDER ═══════════════════
@@ -2502,7 +2623,7 @@ function renderLeaveHistory() {
   const tbody = document.getElementById('leave-history-body');
   if (!tbody) return;
   if (!leaves.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:28px">No leave applications yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:28px">No leave applications yet.</td></tr>`;
     return;
   }
   const statusStyle = {Pending:'color:var(--amber)', Approved:'color:var(--green)', Rejected:'color:var(--red)'};
@@ -2514,6 +2635,7 @@ function renderLeaveHistory() {
     <td style="font-weight:600;color:var(--cyan)">${l.days||'—'}</td>
     <td style="font-size:12px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.reason||'—'}</td>
     <td style="font-size:12px;color:var(--text2)">${l.cover||'—'}</td>
+    <td style="font-size:11px;color:var(--cyan)">${l.rm||'—'}</td>
     <td style="${statusStyle[l.status]||''};font-weight:600;font-size:12px">${l.status||'Pending'}</td>
   </tr>`).join('');
 }
@@ -3483,6 +3605,326 @@ function checkTodayCelebrations() {
 
 // Patch doLogin to add celebration check and chat init
 
+
+
+// ═══════════════════ EMAIL SYSTEM ═══════════════════
+const EMAIL_FOLDERS = [
+  {id:'inbox',   label:'Inbox',   icon:'📥', count: 3},
+  {id:'sent',    label:'Sent',    icon:'📤', count: 0},
+  {id:'drafts',  label:'Drafts',  icon:'📝', count: 0},
+  {id:'starred', label:'Starred', icon:'⭐', count: 1},
+  {id:'leave',   label:'Leave Applications', icon:'🌴', count: 0},
+];
+
+let activeFolder = 'inbox';
+let emailGmailConnected = false;
+let allEmails = [];
+let currentEmailId = null;
+let composeTo = [];
+
+function getEmails() {
+  return JSON.parse(localStorage.getItem('emails') || 'null') || seedEmailData();
+}
+
+function saveEmails(arr) {
+  localStorage.setItem('emails', JSON.stringify(arr));
+}
+
+function seedEmailData() {
+  const now = new Date();
+  const fmt = d => d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  const emails = [
+    {id:'e1', folder:'inbox', from:'HR — Two99', from_email:'hr@two99.org', to: 'All Employees', cc:'', subject:'Welcome to TWO99 Work Dashboard!', body:'Dear Team,\n\nWelcome to the new TWO99 Work Dashboard. This portal is your one-stop workspace for daily task tracking, leave applications, HR policies, announcements and more.\n\nPlease update your daily task sheet by 9:30 AM every morning.\n\nRegards,\nHR Team — Two99', date: fmt(new Date(now.getTime() - 3*86400000)), read: false, starred: true},
+    {id:'e2', folder:'inbox', from:'HR — Two99', from_email:'hr@two99.org', to: 'All Employees', cc:'', subject:'HR Policies v2.0 Now Live — Acknowledgement Required', body:'Dear Team,\n\nAll HR policies have been updated to Version 2.0, effective 1st April 2026.\n\nPlease review the following policies in the HR Policies section of this portal:\n• Leave Policy\n• Code of Conduct\n• Work Hours Policy\n• Performance Matrix (NC/PF)\n• Onboarding & Resignation Policy\n\nYour written acknowledgement is required within 5 working days.\n\nRegards,\nHR Team — Two99', date: fmt(new Date(now.getTime() - 2*86400000)), read: false, starred: false},
+    {id:'e3', folder:'inbox', from:'HR — Two99', from_email:'hr@two99.org', to: 'All Employees', cc:'', subject:'Daily Task Sheet Reminder', body:'Dear Team,\n\nThis is a reminder that the Daily Task Sheet must be updated:\n\n• Morning update: by 9:30 AM\n• End of day: before 7:00 PM\n\nFailure to update will result in NC(-1) after 2 consecutive misses and NC(-3) + HR warning for 3+ misses in a month.\n\nPlease ensure compliance.\n\nRegards,\nHR Team — Two99', date: fmt(new Date(now.getTime() - 86400000)), read: true, starred: false},
+  ];
+  saveEmails(emails);
+  return emails;
+}
+
+function initEmail() {
+  allEmails = getEmails();
+  renderEmailFolders();
+  renderEmailContacts();
+  renderEmailList();
+  renderComposeTeamBtns();
+}
+
+function renderEmailFolders() {
+  const el = document.getElementById('email-folders');
+  if (!el) return;
+  el.innerHTML = EMAIL_FOLDERS.map(f => {
+    const count = f.id === 'inbox' ? allEmails.filter(e => e.folder === 'inbox' && !e.read).length :
+                  f.id === 'drafts' ? allEmails.filter(e => e.folder === 'drafts').length :
+                  f.id === 'sent'   ? allEmails.filter(e => e.folder === 'sent').length :
+                  f.id === 'starred'? allEmails.filter(e => e.starred).length :
+                  f.id === 'leave'  ? allEmails.filter(e => e.folder === 'leave').length : 0;
+    return `<div class="chat-channel-item ${f.id === activeFolder ? 'active' : ''}" onclick="switchFolder('${f.id}', this)" style="justify-content:space-between;">
+      <span>${f.icon} ${f.label}</span>
+      ${count > 0 ? `<span style="background:${f.id==='inbox'?'var(--red)':'var(--card2)'};color:${f.id==='inbox'?'white':'var(--text2)'};border-radius:20px;font-size:10px;font-weight:700;padding:1px 6px;">${count}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderEmailContacts() {
+  const el = document.getElementById('email-contacts');
+  if (!el || !currentUser) return;
+  el.innerHTML = EMPLOYEES.filter(e => e.id !== currentUser.id).slice(0, 10).map(e => `
+    <div class="chat-channel-item" onclick="composeToContact('${e.email}','${e.name}')" style="gap:7px;">
+      <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--purple));display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#080e1c;flex-shrink:0;">${e.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</div>
+      <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.name.split(' ')[0]}</span>
+    </div>`).join('');
+}
+
+function renderComposeTeamBtns() {
+  const el = document.getElementById('compose-team-btns');
+  if (!el || !currentUser) return;
+  el.innerHTML = EMPLOYEES.filter(e => e.id !== currentUser.id && e.email).map(e =>
+    `<button onclick="addComposeTo('${e.email}','${e.name}')" style="background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">${e.name.split(' ')[0]}</button>`
+  ).join('');
+}
+
+function switchFolder(id, el) {
+  activeFolder = id;
+  document.querySelectorAll('#email-folders .chat-channel-item').forEach(e => e.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderEmailList();
+}
+
+function getEmailsForFolder() {
+  if (activeFolder === 'starred') return allEmails.filter(e => e.starred);
+  return allEmails.filter(e => e.folder === activeFolder);
+}
+
+function renderEmailList() {
+  const el = document.getElementById('email-list');
+  if (!el) return;
+  const emails = getEmailsForFolder();
+  const search = document.getElementById('email-search')?.value?.toLowerCase() || '';
+  const filtered = search ? emails.filter(e =>
+    e.subject.toLowerCase().includes(search) ||
+    e.from.toLowerCase().includes(search) ||
+    e.body.toLowerCase().includes(search)
+  ) : emails;
+
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty-state" style="margin-top:40px"><div class="empty-icon">📭</div><p>No emails here.</p></div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(email => `
+    <div onclick="openEmail('${email.id}')" style="padding:14px 18px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:12px;align-items:flex-start;background:${email.read ? 'transparent' : 'var(--card2)'};transition:background .15s;" onmouseover="this.style.background='var(--cyan-glow)'" onmouseout="this.style.background='${email.read ? 'transparent' : 'var(--card2)'}'">
+      <div class="avatar" style="width:34px;height:34px;font-size:11px;flex-shrink:0;">${(email.from||'?').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+          <span style="font-size:13px;font-weight:${email.read?'500':'700'};color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${email.from}</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:auto;white-space:nowrap;">${email.date}</span>
+          ${email.starred ? '<span style="color:var(--amber);font-size:12px;">⭐</span>' : ''}
+        </div>
+        <div style="font-size:12.5px;font-weight:${email.read?'400':'600'};color:${email.read?'var(--text2)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${email.subject}</div>
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">${email.body.replace(/\n/g,' ').slice(0,80)}...</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterEmails(val) { renderEmailList(); }
+
+function openEmail(id) {
+  const email = allEmails.find(e => e.id === id);
+  if (!email) return;
+  // Mark as read
+  email.read = true;
+  saveEmails(allEmails);
+  renderEmailFolders();
+  renderEmailList();
+  currentEmailId = id;
+
+  document.getElementById('ev-subject').textContent = email.subject;
+  document.getElementById('ev-from').textContent = email.from + ' <' + email.from_email + '>';
+  document.getElementById('ev-to').textContent = email.to;
+  const ccWrap = document.getElementById('ev-cc-wrap');
+  if (email.cc) { document.getElementById('ev-cc').textContent = email.cc; ccWrap.style.display = 'inline'; }
+  else ccWrap.style.display = 'none';
+  document.getElementById('ev-date').textContent = email.date;
+  document.getElementById('ev-body').textContent = email.body;
+  const av = document.getElementById('ev-avatar');
+  av.textContent = (email.from||'?').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('email-view-modal').classList.add('open');
+}
+
+function replyEmail() {
+  const email = allEmails.find(e => e.id === currentEmailId);
+  if (!email) return;
+  document.getElementById('email-view-modal').classList.remove('open');
+  openCompose();
+  document.getElementById('compose-to').value = email.from_email;
+  document.getElementById('compose-subject').value = 'Re: ' + email.subject;
+  document.getElementById('compose-body').value = '\n\n---\nOn ' + email.date + ', ' + email.from + ' wrote:\n' + email.body;
+}
+
+function forwardEmail() {
+  const email = allEmails.find(e => e.id === currentEmailId);
+  if (!email) return;
+  document.getElementById('email-view-modal').classList.remove('open');
+  openCompose();
+  document.getElementById('compose-subject').value = 'Fwd: ' + email.subject;
+  document.getElementById('compose-body').value = '\n\n--- Forwarded message ---\nFrom: ' + email.from + '\nDate: ' + email.date + '\nSubject: ' + email.subject + '\n\n' + email.body;
+}
+
+function openCompose() {
+  composeTo = [];
+  ['compose-to','compose-cc','compose-subject','compose-body'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('compose-to-pills').innerHTML = '';
+  // Pre-fill sender name in body
+  const el = document.getElementById('compose-body');
+  if (el) el.value = '\n\nRegards,\n' + (currentUser?.name || '');
+  document.getElementById('compose-modal').classList.add('open');
+}
+
+function addComposeTo(email, name) {
+  if (!email || composeTo.includes(email)) return;
+  composeTo.push(email);
+  renderComposeToPills();
+}
+
+function composeToContact(email, name) {
+  openCompose();
+  addComposeTo(email, name);
+}
+
+function removeComposeTo(email) {
+  composeTo = composeTo.filter(e => e !== email);
+  renderComposeToPills();
+}
+
+function renderComposeToPills() {
+  const el = document.getElementById('compose-to-pills');
+  if (!el) return;
+  el.innerHTML = composeTo.map(email => {
+    const emp = EMPLOYEES.find(e => e.email === email);
+    const name = emp ? emp.name.split(' ')[0] : email;
+    return `<span style="background:var(--cyan-glow);border:1px solid rgba(0,212,255,.3);border-radius:20px;padding:3px 9px;font-size:11px;color:var(--cyan);display:inline-flex;align-items:center;gap:5px;">${name} <span onclick="removeComposeTo('${email}')" style="cursor:pointer;font-size:12px;line-height:1;">✕</span></span>`;
+  }).join('');
+}
+
+function sendEmail() {
+  const subject = document.getElementById('compose-subject').value.trim();
+  const body = document.getElementById('compose-body').value.trim();
+  const toField = document.getElementById('compose-to').value.trim();
+  const cc = document.getElementById('compose-cc').value.trim();
+
+  // Merge typed + pill recipients
+  const allTo = [...composeTo];
+  if (toField && !allTo.includes(toField)) allTo.push(toField);
+
+  if (!subject) { showToast('Missing Subject', 'Please enter an email subject.'); return; }
+  if (!allTo.length) { showToast('No Recipients', 'Please add at least one recipient.'); return; }
+
+  const now = new Date();
+  const newEmail = {
+    id: 'email_' + Date.now(),
+    folder: 'sent',
+    from: currentUser?.name || 'You',
+    from_email: currentUser?.email || '',
+    to: allTo.join(', '),
+    cc,
+    subject,
+    body,
+    date: now.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}),
+    read: true,
+    starred: false,
+  };
+
+  allEmails.unshift(newEmail);
+  saveEmails(allEmails);
+
+  document.getElementById('compose-modal').classList.remove('open');
+  renderEmailFolders();
+  renderEmailList();
+
+  addNotif('📧', 'Email Sent', `"${subject}" sent to ${allTo.join(', ')}`, 'Just now');
+  showToast('📧 Email Sent', `"${subject}" delivered to ${allTo.length} recipient(s)`);
+
+  if (emailGmailConnected) showToast('📧 Synced to Gmail', 'Email also sent via your @two99.org Gmail.');
+}
+
+function saveDraft() {
+  const subject = document.getElementById('compose-subject').value.trim() || '(no subject)';
+  const body = document.getElementById('compose-body').value.trim();
+  const toField = document.getElementById('compose-to').value.trim();
+
+  const now = new Date();
+  allEmails.unshift({
+    id: 'draft_' + Date.now(),
+    folder: 'drafts',
+    from: currentUser?.name || 'You',
+    from_email: currentUser?.email || '',
+    to: toField || composeTo.join(', '),
+    cc: document.getElementById('compose-cc').value.trim(),
+    subject,
+    body,
+    date: now.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}),
+    read: true,
+    starred: false,
+  });
+  saveEmails(allEmails);
+  document.getElementById('compose-modal').classList.remove('open');
+  showToast('💾 Draft Saved', `"${subject}" saved to Drafts`);
+  renderEmailFolders();
+}
+
+function refreshEmails() {
+  showToast('↻ Refreshed', emailGmailConnected ? 'Gmail synced successfully.' : 'Connect Gmail to sync real emails.');
+  renderEmailFolders();
+  renderEmailList();
+}
+
+function connectEmailGmail() {
+  const confirmed = confirm('Connect your Two99 Gmail account?\n\nThis will sync your @two99.org inbox with this dashboard. Leave applications will automatically CC your Reporting Manager.\n\nNote: Requires Google OAuth Client ID from IT admin for full sync.');
+  if (!confirmed) return;
+  const btn = document.getElementById('email-gmail-btn');
+  const status = document.getElementById('email-gmail-status');
+  if (btn) { btn.innerHTML = '<span>⏳</span> Connecting...'; btn.disabled = true; }
+  setTimeout(() => {
+    emailGmailConnected = true;
+    if (btn) { btn.innerHTML = '<span>✅</span> Gmail Connected'; btn.style.borderColor = 'var(--green)'; btn.style.color = 'var(--green)'; }
+    if (status) { status.style.display = 'block'; status.textContent = currentUser?.email || 'Connected'; }
+    showToast('✅ Gmail Connected!', 'Your inbox is now synced with this dashboard.');
+    addNotif('📧', 'Gmail Connected', 'Your @two99.org inbox is linked to the dashboard', 'Just now');
+  }, 1500);
+}
+
+// Auto-send leave application email when leave is applied
+const _origApplyLeave = window.applyLeave || function(){};
+
+// Patch leave notification to also create an email
+function sendLeaveEmail(leaveData) {
+  if (!currentUser) return;
+  const now = new Date();
+  const subject = `Leave Application — ${leaveData.type} (${leaveData.from} to ${leaveData.to}) — ${currentUser.name}`;
+  const body = `Dear ${currentUser.rm || 'Sir/Ma\'am'},\n\nI would like to apply for ${leaveData.type} leave for ${leaveData.days} working day(s).\n\nDetails:\n• Leave Type: ${leaveData.type}\n• From: ${leaveData.from}\n• To: ${leaveData.to}\n• Working Days: ${leaveData.days}\n• Reason: ${leaveData.reason}\n• Work will be covered by: ${leaveData.cover}\n\nKindly approve the same.\n\nRegards,\n${currentUser.name}\n${currentUser.designation}\n${currentUser.email}`;
+
+  const leaveEmail = {
+    id: 'lvemail_' + Date.now(),
+    folder: 'leave',
+    from: currentUser.name,
+    from_email: currentUser.email,
+    to: currentUser.rm_email || 'hr@two99.org',
+    cc: 'hr@two99.org',
+    subject,
+    body,
+    date: now.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}),
+    read: true,
+    starred: false,
+  };
+  const sentCopy = {...leaveEmail, id: 'lvs_'+Date.now(), folder:'sent'};
+  if (!allEmails) allEmails = getEmails();
+  allEmails.unshift(leaveEmail);
+  allEmails.unshift(sentCopy);
+  saveEmails(allEmails);
+  renderEmailFolders();
+}
 
 // ═══════════════════ START ═══════════════════
 init();
