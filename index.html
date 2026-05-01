@@ -847,6 +847,10 @@ h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
         <div class="nav-item" onclick="showPage('tickets',this)"><span class="nav-icon">🎫</span>Raise a Ticket</div>
         <div class="nav-item" onclick="showPage('salary',this)"><span class="nav-icon">💰</span>Salary Slips</div>
         <div class="nav-item" onclick="showPage('onleave',this)"><span class="nav-icon">🌴</span>Who's On Leave</div>
+        <div class="nav-item" onclick="showPage('reimbursement',this)"><span class="nav-icon">🧾</span>Reimbursement</div>
+        <div class="nav-item" onclick="showPage('performance',this)"><span class="nav-icon">⭐</span>Performance (NC/PF)</div>
+        <div class="nav-item" onclick="showPage('rm-portal',this)" id="rm-portal-nav" style="display:none"><span class="nav-icon">👥</span>My Team (RM View)</div>
+        <div class="nav-item" onclick="showPage('add-employee',this)" id="add-emp-nav" style="display:none"><span class="nav-icon">➕</span>Add Employee</div>
         <div class="nav-item" onclick="showPage('celebrations',this)"><span class="nav-icon">🎉</span>Celebrations</div>
         <div class="nav-item" onclick="showPage('chat',this)"><span class="nav-icon">💬</span>Team Chat</div>
         <div class="nav-item" id="admin-nav-item" style="display:none" onclick="showPage('admin',this)"><span class="nav-icon">⊿</span>Admin View</div>
@@ -1660,6 +1664,209 @@ h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
           <div class="tab-pill" onclick="switchOnLeaveTab('all',this)">All Upcoming</div>
         </div>
         <div id="on-leave-week"></div>
+      </div>
+
+      <!-- ═══ REIMBURSEMENT ═══ -->
+      <div class="page" id="page-reimbursement">
+        <div class="tab-pills" id="reimb-tabs">
+          <div class="tab-pill active" onclick="switchReimbTab('new',this)">New Claim</div>
+          <div class="tab-pill" onclick="switchReimbTab('my',this)">My Claims</div>
+          <div class="tab-pill" onclick="switchReimbTab('approve',this)" id="reimb-approve-tab" style="display:none">Pending Approval</div>
+          <div class="tab-pill" onclick="switchReimbTab('accounts',this)" id="reimb-accounts-tab" style="display:none">Accounts Queue</div>
+        </div>
+
+        <!-- NEW CLAIM -->
+        <div id="reimb-new">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+            <div class="profile-card" style="margin-bottom:0">
+              <h4 style="margin-bottom:4px">🧾 Conveyance Expenses</h4>
+              <p style="font-size:11px;color:var(--text2);margin-bottom:14px">Travel/conveyance expenses with km details</p>
+              <div style="display:flex;flex-direction:column;gap:9px" id="conv-rows">
+                <div class="conv-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 80px 70px auto;gap:7px;align-items:end;">
+                  <div class="form-field"><label>Date</label><input type="date" class="conv-date"></div>
+                  <div class="form-field"><label>From</label><input type="text" class="conv-from" placeholder="Origin"></div>
+                  <div class="form-field"><label>To</label><input type="text" class="conv-to" placeholder="Destination"></div>
+                  <div class="form-field"><label>Mode</label><select class="conv-mode"><option>Car</option><option>Auto</option><option>Cab</option><option>Metro</option><option>Bus</option><option>Train</option><option>Flight</option></select></div>
+                  <div class="form-field"><label>Kms</label><input type="number" class="conv-kms" placeholder="0" min="0" oninput="calcConvAmt(this)"></div>
+                  <div class="form-field"><label>Amt ₹</label><input type="number" class="conv-amt" placeholder="0"></div>
+                </div>
+              </div>
+              <button onclick="addConvRow()" class="btn-outline" style="margin-top:10px;font-size:12px;padding:6px 12px">+ Add Row</button>
+              <div style="margin-top:10px;padding:10px 12px;background:var(--card2);border-radius:8px;display:flex;justify-content:space-between;font-size:13px;font-weight:700">
+                <span>Total Conveyance:</span><span style="color:var(--cyan)" id="conv-total">₹ 0</span>
+              </div>
+            </div>
+            <div class="profile-card" style="margin-bottom:0">
+              <h4 style="margin-bottom:4px">📋 Other Expenses</h4>
+              <p style="font-size:11px;color:var(--text2);margin-bottom:14px">Meals, registration, other business expenses</p>
+              <div style="display:flex;flex-direction:column;gap:9px" id="other-rows">
+                <div class="other-row" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;align-items:end;">
+                  <div class="form-field"><label>Date</label><input type="date" class="other-date"></div>
+                  <div class="form-field"><label>Description</label><input type="text" class="other-desc" placeholder="Brief particulars"></div>
+                  <div class="form-field"><label>Bill / Enclosure</label><input type="text" class="other-bill" placeholder="Bill reference"></div>
+                  <div class="form-field"><label>Amount ₹</label><input type="number" class="other-amt" placeholder="0" oninput="calcTotals()"></div>
+                </div>
+              </div>
+              <button onclick="addOtherRow()" class="btn-outline" style="margin-top:10px;font-size:12px;padding:6px 12px">+ Add Row</button>
+              <div style="margin-top:10px;padding:10px 12px;background:var(--card2);border-radius:8px;display:flex;justify-content:space-between;font-size:13px;font-weight:700">
+                <span>Total Other:</span><span style="color:var(--purple)" id="other-total">₹ 0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bill Upload + Summary -->
+          <div class="profile-card">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start">
+              <div>
+                <h4 style="margin-bottom:12px">📎 Upload Bills / Receipts</h4>
+                <div class="upload-area" onclick="document.getElementById('bill-upload').click()" style="padding:16px">
+                  <div style="font-size:24px">📄</div>
+                  <p style="font-size:12px;color:var(--text2);margin-top:6px">Click to upload bills<br><span style="font-size:10px;color:var(--text3)">PDF, JPG, PNG · Max 5MB each</span></p>
+                </div>
+                <input type="file" id="bill-upload" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleBillUpload(this)">
+                <div id="bill-list" style="margin-top:8px;display:flex;flex-direction:column;gap:5px"></div>
+              </div>
+              <div>
+                <h4 style="margin-bottom:12px">📊 Claim Summary</h4>
+                <div style="background:var(--card2);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;justify-content:space-between;font-size:13px"><span>Conveyance Total</span><span id="sum-conv">₹0</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px"><span>Other Expenses</span><span id="sum-other">₹0</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px"><span>Advance Taken</span>
+                    <input type="number" id="advance-amt" placeholder="0" style="width:80px;background:var(--input-bg);border:1px solid var(--border2);border-radius:6px;padding:3px 7px;color:var(--text);font-size:12px;outline:none;text-align:right" oninput="calcTotals()">
+                  </div>
+                  <div style="height:1px;background:var(--border)"></div>
+                  <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800"><span>Grand Total</span><span id="sum-grand" style="color:var(--cyan)">₹0</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>Net Reimbursable</span><span id="sum-net" style="color:var(--green)">₹0</span></div>
+                </div>
+                <div class="form-field" style="margin-top:12px"><label>Notes / Remarks</label><textarea id="reimb-notes" style="min-height:60px" placeholder="Any additional notes for the approver..."></textarea></div>
+                <button class="btn-primary" onclick="submitClaim()" style="width:100%;justify-content:center;margin-top:12px">📤 Submit Claim to RM</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MY CLAIMS -->
+        <div id="reimb-my" style="display:none">
+          <div class="tasks-table-wrap"><table class="tasks-table">
+            <thead><tr><th>Claim ID</th><th>Month</th><th>Conv.</th><th>Other</th><th>Grand Total</th><th>Net</th><th>RM Status</th><th>Accounts</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody id="my-claims-body"></tbody>
+          </table></div>
+        </div>
+
+        <!-- RM APPROVAL -->
+        <div id="reimb-approve" style="display:none">
+          <div class="tasks-table-wrap"><table class="tasks-table">
+            <thead><tr><th>Claim ID</th><th>Employee</th><th>Grand Total</th><th>Net</th><th>Bills</th><th>Date</th><th>Notes</th><th>Action</th></tr></thead>
+            <tbody id="approve-claims-body"></tbody>
+          </table></div>
+        </div>
+
+        <!-- ACCOUNTS QUEUE -->
+        <div id="reimb-accounts" style="display:none">
+          <div class="tasks-table-wrap"><table class="tasks-table">
+            <thead><tr><th>Claim ID</th><th>Employee</th><th>Designation</th><th>Grand Total</th><th>Net Payable</th><th>RM Approved</th><th>Process By</th><th>Ch No</th><th>Bank</th><th>Action</th></tr></thead>
+            <tbody id="accounts-claims-body"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- CLAIM VIEW MODAL -->
+      <div class="modal-overlay" id="claim-modal">
+        <div class="modal" style="width:740px;padding:0;background:transparent;border:none;box-shadow:none">
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px">
+            <button onclick="downloadClaim()" class="btn-primary" style="font-size:12px;padding:8px 14px">⬇ Download</button>
+            <button onclick="document.getElementById('claim-modal').classList.remove('open')" class="btn-outline" style="font-size:12px;padding:8px 14px;background:var(--card)">✕ Close</button>
+          </div>
+          <div id="claim-modal-content" style="overflow-y:auto;max-height:82vh;border-radius:12px"></div>
+        </div>
+      </div>
+
+      <!-- ═══ PERFORMANCE NC/PF ═══ -->
+      <div class="page" id="page-performance">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+          <div class="stat-card"><div class="accent-line" style="background:var(--green)"></div><div class="stat-label">Total PF (Positive)</div><div class="stat-val" id="pf-total" style="color:var(--green)">+0</div><div class="stat-sub">Positive feedback earned</div></div>
+          <div class="stat-card"><div class="accent-line" style="background:var(--red)"></div><div class="stat-label">Total NC (Negative)</div><div class="stat-val" id="nc-total" style="color:var(--red)">-0</div><div class="stat-sub">Non-compliance marks</div></div>
+          <div class="stat-card"><div class="accent-line" style="background:var(--cyan)"></div><div class="stat-label">Net Score</div><div class="stat-val" id="net-score" style="color:var(--cyan)">0</div><div class="stat-sub">Monthly standing</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:380px 1fr;gap:14px;align-items:start">
+          <!-- Log NC/PF (Admins & RMs) -->
+          <div class="profile-card" style="margin-bottom:0" id="ncpf-log-form">
+            <h4 style="margin-bottom:5px">⭐ Log NC / PF Score</h4>
+            <p style="font-size:11px;color:var(--text2);margin-bottom:14px">Scores must be supported by factual evidence submitted within 5 working days.</p>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="form-field"><label>Employee</label><select id="ncpf-emp"><option value="">— Select —</option></select></div>
+              <div class="form-field"><label>Score Type</label>
+                <select id="ncpf-type">
+                  <option value="+1">+1 (Peer / Team Lead)</option>
+                  <option value="+3">+3 (Reporting Manager)</option>
+                  <option value="+5">+5 (Senior Mgmt / Client)</option>
+                  <option value="-1">-1 (Peer / Team Lead)</option>
+                  <option value="-3">-3 (Reporting Manager)</option>
+                  <option value="-5">-5 (Senior Mgmt / Client)</option>
+                </select>
+              </div>
+              <div class="form-field"><label>Date of Incident</label><input type="date" id="ncpf-date"></div>
+              <div class="form-field"><label>Factual Description</label><textarea id="ncpf-desc" style="min-height:70px" placeholder="Clear, factual, first-person account of the incident..."></textarea></div>
+              <div class="form-field"><label>Impact</label><input type="text" id="ncpf-impact" placeholder="Actual/potential impact on team, client, or Two99"></div>
+            </div>
+            <button class="btn-primary" onclick="logNCPF()" style="width:100%;justify-content:center;margin-top:12px">Submit Score</button>
+          </div>
+          <!-- Score History -->
+          <div>
+            <div class="section-header"><h4>Score History</h4></div>
+            <div class="tasks-table-wrap" style="margin-bottom:0"><table class="tasks-table">
+              <thead><tr><th>Date</th><th>Employee</th><th>Score</th><th>By</th><th>Description</th><th>Status</th></tr></thead>
+              <tbody id="ncpf-history-body"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ RM PORTAL ═══ -->
+      <div class="page" id="page-rm-portal">
+        <div class="tab-pills" id="rm-tabs">
+          <div class="tab-pill active" onclick="switchRMTab('attendance',this)">Team Attendance</div>
+          <div class="tab-pill" onclick="switchRMTab('tasks',this)">Team Tasks</div>
+          <div class="tab-pill" onclick="switchRMTab('ncpf',this)">Team NC/PF</div>
+          <div class="tab-pill" onclick="switchRMTab('claims',this)">Pending Claims</div>
+        </div>
+        <div id="rmt-attendance"><div class="tasks-table-wrap"><table class="tasks-table"><thead><tr><th>Employee</th><th>Today In</th><th>Today Out</th><th>Duration</th><th>Status</th><th>On Leave</th></tr></thead><tbody id="rm-att-body"></tbody></table></div></div>
+        <div id="rmt-tasks" style="display:none"><div class="tasks-table-wrap"><table class="tasks-table"><thead><tr><th>Employee</th><th>Date</th><th>Client</th><th>Task</th><th>Sub-task</th><th>Status</th><th>Hours</th></tr></thead><tbody id="rm-tasks-body"></tbody></table></div></div>
+        <div id="rmt-ncpf" style="display:none"><div class="tasks-table-wrap"><table class="tasks-table"><thead><tr><th>Employee</th><th>Net Score</th><th>PF</th><th>NC</th><th>Standing</th></tr></thead><tbody id="rm-ncpf-body"></tbody></table></div></div>
+        <div id="rmt-claims" style="display:none"><div class="tasks-table-wrap"><table class="tasks-table"><thead><tr><th>Claim ID</th><th>Employee</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead><tbody id="rm-claims-body"></tbody></table></div></div>
+      </div>
+
+      <!-- ═══ ADD EMPLOYEE (Admin only) ═══ -->
+      <div class="page" id="page-add-employee">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="profile-card" style="margin-bottom:0">
+            <h4 style="margin-bottom:14px">➕ Add New Employee</h4>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="form-field"><label>Full Name</label><input type="text" id="new-name" placeholder="Full name as per appointment letter"></div>
+              <div class="form-field"><label>Designation</label><input type="text" id="new-desig" placeholder="e.g. SEO Executive"></div>
+              <div class="form-field"><label>Official Email</label><input type="email" id="new-email" placeholder="name@two99.org"></div>
+              <div class="form-field"><label>Phone</label><input type="text" id="new-phone" placeholder="10-digit mobile"></div>
+              <div class="form-field"><label>Date of Birth</label><input type="date" id="new-dob"></div>
+              <div class="form-field"><label>Date of Joining</label><input type="date" id="new-doj"></div>
+              <div class="form-field"><label>Reporting Manager</label>
+                <select id="new-rm"><option value="">— Select RM —</option></select></div>
+              <div class="form-field"><label>Address</label><textarea id="new-address" style="min-height:60px" placeholder="Current address"></textarea></div>
+              <div style="display:flex;gap:10px">
+                <div class="form-field" style="flex:1"><label>Admin Access?</label><select id="new-admin"><option value="false">No</option><option value="true">Yes</option></select></div>
+                <div class="form-field" style="flex:1"><label>Tasks Key (Sheet name)</label><input type="text" id="new-tkey" placeholder="e.g. Vikram"></div>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="addNewEmployee()" style="width:100%;justify-content:center;margin-top:14px">➕ Add Employee</button>
+            <div id="add-emp-msg" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:12px"></div>
+          </div>
+          <div class="profile-card" style="margin-bottom:0">
+            <h4 style="margin-bottom:14px">👥 All Employees</h4>
+            <div class="tasks-table-wrap" style="margin-bottom:0;max-height:500px;overflow-y:auto"><table class="tasks-table">
+              <thead><tr><th>Name</th><th>Designation</th><th>RM</th><th>Email</th></tr></thead>
+              <tbody id="emp-list-body"></tbody>
+            </table></div>
+          </div>
+        </div>
       </div>
 
     </div><!-- /content -->
@@ -4368,6 +4575,599 @@ const _origDL2 = doLogin;
 doLogin = function(){
   _origDL2();
   setTimeout(()=>{renderDashOnLeave();},600);
+};
+
+
+// ══════════════════════════════════════════
+// REIMBURSEMENT CLAIM SYSTEM
+// ══════════════════════════════════════════
+function getClaims(){return JSON.parse(localStorage.getItem('claims')||'[]');}
+function saveClaims(a){localStorage.setItem('claims',JSON.stringify(a));}
+
+let uploadedBills=[];
+let currentClaimId=null;
+
+function switchReimbTab(tab,el){
+  ['new','my','approve','accounts'].forEach(t=>{const e=document.getElementById('reimb-'+t);if(e)e.style.display='none';});
+  const tEl=document.getElementById('reimb-'+tab);if(tEl)tEl.style.display='block';
+  document.querySelectorAll('#reimb-tabs .tab-pill').forEach(p=>p.classList.remove('active'));
+  if(el)el.classList.add('active');
+  if(tab==='my')renderMyClaims();
+  if(tab==='approve')renderApproveClaims();
+  if(tab==='accounts')renderAccountsClaims();
+}
+
+function addConvRow(){
+  const row=document.createElement('div');
+  row.className='conv-row';
+  row.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr 80px 70px auto;gap:7px;align-items:end;';
+  row.innerHTML=`<div class="form-field"><label>Date</label><input type="date" class="conv-date"></div><div class="form-field"><label>From</label><input type="text" class="conv-from" placeholder="Origin"></div><div class="form-field"><label>To</label><input type="text" class="conv-to" placeholder="Destination"></div><div class="form-field"><label>Mode</label><select class="conv-mode"><option>Car</option><option>Auto</option><option>Cab</option><option>Metro</option><option>Bus</option><option>Train</option><option>Flight</option></select></div><div class="form-field"><label>Kms</label><input type="number" class="conv-kms" placeholder="0" oninput="calcConvAmt(this)"></div><div class="form-field"><label>Amt ₹</label><input type="number" class="conv-amt" placeholder="0" oninput="calcTotals()"></div>`;
+  document.getElementById('conv-rows').appendChild(row);
+}
+
+function addOtherRow(){
+  const row=document.createElement('div');
+  row.className='other-row';
+  row.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;align-items:end;';
+  row.innerHTML=`<div class="form-field"><label>Date</label><input type="date" class="other-date"></div><div class="form-field"><label>Description</label><input type="text" class="other-desc" placeholder="Brief particulars"></div><div class="form-field"><label>Bill Ref</label><input type="text" class="other-bill" placeholder="Bill reference"></div><div class="form-field"><label>Amount ₹</label><input type="number" class="other-amt" placeholder="0" oninput="calcTotals()"></div>`;
+  document.getElementById('other-rows').appendChild(row);
+}
+
+function calcConvAmt(kmsInput){
+  const row=kmsInput.closest('.conv-row');
+  const kms=parseFloat(kmsInput.value)||0;
+  const rate=10; // ₹10/km default
+  const amtInput=row.querySelector('.conv-amt');
+  if(amtInput)amtInput.value=Math.round(kms*rate);
+  calcTotals();
+}
+
+function calcTotals(){
+  let convTotal=0,otherTotal=0;
+  document.querySelectorAll('.conv-amt').forEach(i=>{convTotal+=parseFloat(i.value)||0;});
+  document.querySelectorAll('.other-amt').forEach(i=>{otherTotal+=parseFloat(i.value)||0;});
+  const advance=parseFloat(document.getElementById('advance-amt')?.value)||0;
+  const grand=convTotal+otherTotal;
+  const net=grand-advance;
+  const fmt=n=>'₹'+n.toLocaleString('en-IN');
+  ['conv-total','sum-conv'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=fmt(convTotal);});
+  ['other-total','sum-other'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=fmt(otherTotal);});
+  const sg=document.getElementById('sum-grand');if(sg)sg.textContent=fmt(grand);
+  const sn=document.getElementById('sum-net');if(sn)sn.textContent=fmt(net);
+}
+
+function handleBillUpload(input){
+  Array.from(input.files).forEach(f=>{
+    uploadedBills.push(f.name);
+    const el=document.getElementById('bill-list');
+    if(el){
+      const div=document.createElement('div');
+      div.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:7px;font-size:12px;color:var(--green)';
+      div.innerHTML=`📄 ${f.name} <span style="margin-left:auto;cursor:pointer;color:var(--text3)" onclick="this.parentElement.remove()">✕</span>`;
+      el.appendChild(div);
+    }
+  });
+}
+
+function getClaimData(){
+  const convRows=[];
+  document.querySelectorAll('.conv-row').forEach(row=>{
+    const date=row.querySelector('.conv-date')?.value;
+    const from=row.querySelector('.conv-from')?.value;
+    const to=row.querySelector('.conv-to')?.value;
+    const mode=row.querySelector('.conv-mode')?.value;
+    const kms=row.querySelector('.conv-kms')?.value;
+    const amt=parseFloat(row.querySelector('.conv-amt')?.value)||0;
+    if(from||to||amt)convRows.push({date,from,to,mode,kms,amt});
+  });
+  const otherRows=[];
+  document.querySelectorAll('.other-row').forEach(row=>{
+    const date=row.querySelector('.other-date')?.value;
+    const desc=row.querySelector('.other-desc')?.value;
+    const bill=row.querySelector('.other-bill')?.value;
+    const amt=parseFloat(row.querySelector('.other-amt')?.value)||0;
+    if(desc||amt)otherRows.push({date,desc,bill,amt});
+  });
+  const convTotal=convRows.reduce((s,r)=>s+r.amt,0);
+  const otherTotal=otherRows.reduce((s,r)=>s+r.amt,0);
+  const advance=parseFloat(document.getElementById('advance-amt')?.value)||0;
+  const grand=convTotal+otherTotal;
+  const net=grand-advance;
+  const notes=document.getElementById('reimb-notes')?.value||'';
+  return{convRows,otherRows,convTotal,otherTotal,advance,grand,net,notes};
+}
+
+function submitClaim(){
+  if(!currentUser)return;
+  const data=getClaimData();
+  if(data.grand===0){showToast('Empty Claim','Please add at least one expense entry.');return;}
+  const now=new Date();
+  const claim={
+    id:'CLM-'+String(getClaims().length+1).padStart(3,'0'),
+    emp_id:currentUser.id,emp_name:currentUser.name,
+    designation:currentUser.designation,rm:currentUser.rm,rm_email:currentUser.rm_email,
+    ...data,bills:uploadedBills.slice(),
+    date:now.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),
+    month:now.toLocaleString('en-IN',{month:'long',year:'numeric'}),
+    rm_status:'Pending',accounts_status:'Pending',process_by:'',ch_no:'',bank:'',
+  };
+  const claims=getClaims();claims.unshift(claim);saveClaims(claims);
+  addNotif('🧾','Claim Submitted',claim.id+' — ₹'+claim.grand.toLocaleString('en-IN')+' sent to '+claim.rm,'Just now');
+  showToast('🧾 Claim Submitted',claim.id+' sent to '+claim.rm+' for approval');
+  // Reset form
+  document.getElementById('conv-rows').innerHTML=`<div class="conv-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 80px 70px auto;gap:7px;align-items:end;"><div class="form-field"><label>Date</label><input type="date" class="conv-date"></div><div class="form-field"><label>From</label><input type="text" class="conv-from" placeholder="Origin"></div><div class="form-field"><label>To</label><input type="text" class="conv-to" placeholder="Destination"></div><div class="form-field"><label>Mode</label><select class="conv-mode"><option>Car</option><option>Auto</option><option>Cab</option><option>Metro</option><option>Bus</option><option>Train</option><option>Flight</option></select></div><div class="form-field"><label>Kms</label><input type="number" class="conv-kms" placeholder="0" min="0" oninput="calcConvAmt(this)"></div><div class="form-field"><label>Amt ₹</label><input type="number" class="conv-amt" placeholder="0"></div></div>`;
+  document.getElementById('other-rows').innerHTML=`<div class="other-row" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;align-items:end;"><div class="form-field"><label>Date</label><input type="date" class="other-date"></div><div class="form-field"><label>Description</label><input type="text" class="other-desc" placeholder="Brief particulars"></div><div class="form-field"><label>Bill Ref</label><input type="text" class="other-bill" placeholder="Bill reference"></div><div class="form-field"><label>Amount ₹</label><input type="number" class="other-amt" placeholder="0" oninput="calcTotals()"></div></div>`;
+  document.getElementById('bill-list').innerHTML='';document.getElementById('reimb-notes').value='';
+  uploadedBills=[];calcTotals();
+  switchReimbTab('my',null);
+}
+
+function renderMyClaims(){
+  const tbody=document.getElementById('my-claims-body');if(!tbody)return;
+  const claims=getClaims().filter(c=>c.emp_id===currentUser?.id);
+  if(!claims.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">No claims submitted yet.</td></tr>';return;}
+  const sc={Pending:'var(--amber)',Approved:'var(--green)',Rejected:'var(--red)',Processing:'var(--cyan)'};
+  tbody.innerHTML=claims.map(c=>`<tr>
+    <td style="font-family:monospace;font-size:12px;color:var(--cyan);font-weight:700">${c.id}</td>
+    <td style="font-size:12px">${c.month}</td>
+    <td style="font-size:12px">₹${(c.convTotal||0).toLocaleString('en-IN')}</td>
+    <td style="font-size:12px">₹${(c.otherTotal||0).toLocaleString('en-IN')}</td>
+    <td style="font-size:13px;font-weight:700">₹${(c.grand||0).toLocaleString('en-IN')}</td>
+    <td style="font-size:13px;font-weight:700;color:var(--green)">₹${(c.net||0).toLocaleString('en-IN')}</td>
+    <td><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${sc[c.rm_status]||'var(--text3)'}22;color:${sc[c.rm_status]||'var(--text3)'}">${c.rm_status}</span></td>
+    <td><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${sc[c.accounts_status]||'var(--text3)'}22;color:${sc[c.accounts_status]||'var(--text3)'}">${c.accounts_status}</span></td>
+    <td style="font-size:11px;color:var(--text2)">${c.date}</td>
+    <td><button onclick="viewClaim('${c.id}')" style="font-size:10px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--text2)">View</button></td>
+  </tr>`).join('');
+}
+
+function renderApproveClaims(){
+  const tbody=document.getElementById('approve-claims-body');if(!tbody)return;
+  const claims=getClaims().filter(c=>c.rm===currentUser?.name&&c.rm_status==='Pending');
+  if(!claims.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No claims pending your approval.</td></tr>';return;}
+  tbody.innerHTML=claims.map(c=>`<tr>
+    <td style="font-family:monospace;font-size:12px;color:var(--cyan);font-weight:700">${c.id}</td>
+    <td style="font-size:13px;font-weight:600">${c.emp_name}</td>
+    <td style="font-size:13px;font-weight:700">₹${(c.grand||0).toLocaleString('en-IN')}</td>
+    <td style="font-size:13px;font-weight:700;color:var(--green)">₹${(c.net||0).toLocaleString('en-IN')}</td>
+    <td style="font-size:11px;color:var(--cyan)">${c.bills?.length||0} file(s)</td>
+    <td style="font-size:11px;color:var(--text2)">${c.date}</td>
+    <td style="font-size:11px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.notes||'—'}</td>
+    <td style="display:flex;gap:5px;">
+      <button onclick="approveClaim('${c.id}','Approved')" style="font-size:10px;background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.3);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--green)">✓ Approve</button>
+      <button onclick="approveClaim('${c.id}','Rejected')" style="font-size:10px;background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.3);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--red)">✗ Reject</button>
+      <button onclick="viewClaim('${c.id}')" style="font-size:10px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--text2)">View</button>
+    </td>
+  </tr>`).join('');
+}
+
+function approveClaim(id,status){
+  const claims=getClaims();
+  const c=claims.find(c=>c.id===id);if(!c)return;
+  c.rm_status=status;
+  if(status==='Approved')c.accounts_status='Pending';
+  saveClaims(claims);renderApproveClaims();renderAccountsClaims();
+  showToast(status==='Approved'?'✓ Claim Approved':'✗ Claim Rejected',id+' — '+c.emp_name);
+  addNotif(status==='Approved'?'✓':'✗','Claim '+status,id+' for '+c.emp_name+' — ₹'+c.grand.toLocaleString('en-IN'),'Just now');
+}
+
+function renderAccountsClaims(){
+  const tbody=document.getElementById('accounts-claims-body');if(!tbody)return;
+  const claims=getClaims().filter(c=>c.rm_status==='Approved');
+  if(!claims.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">No claims pending accounts processing.</td></tr>';return;}
+  tbody.innerHTML=claims.map(c=>`<tr>
+    <td style="font-family:monospace;font-size:12px;color:var(--cyan);font-weight:700">${c.id}</td>
+    <td style="font-size:12px;font-weight:600">${c.emp_name}</td>
+    <td style="font-size:11px;color:var(--text2)">${c.designation}</td>
+    <td style="font-size:13px;font-weight:700">₹${(c.grand||0).toLocaleString('en-IN')}</td>
+    <td style="font-size:13px;font-weight:700;color:var(--green)">₹${(c.net||0).toLocaleString('en-IN')}</td>
+    <td><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(0,230,118,.12);color:var(--green)">RM Approved</span></td>
+    <td><input type="text" placeholder="Process by" style="width:90px;background:var(--input-bg);border:1px solid var(--border2);border-radius:6px;padding:3px 7px;color:var(--text);font-size:11px;outline:none" onchange="updateAccField('${c.id}','process_by',this.value)" value="${c.process_by||''}"></td>
+    <td><input type="text" placeholder="Ch No" style="width:70px;background:var(--input-bg);border:1px solid var(--border2);border-radius:6px;padding:3px 7px;color:var(--text);font-size:11px;outline:none" onchange="updateAccField('${c.id}','ch_no',this.value)" value="${c.ch_no||''}"></td>
+    <td><input type="text" placeholder="Bank" style="width:80px;background:var(--input-bg);border:1px solid var(--border2);border-radius:6px;padding:3px 7px;color:var(--text);font-size:11px;outline:none" onchange="updateAccField('${c.id}','bank',this.value)" value="${c.bank||''}"></td>
+    <td><button onclick="processedClaim('${c.id}')" style="font-size:10px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--cyan)">✓ Processed</button></td>
+  </tr>`).join('');
+}
+
+function updateAccField(id,field,val){
+  const claims=getClaims();const c=claims.find(c=>c.id===id);if(c){c[field]=val;saveClaims(claims);}
+}
+
+function processedClaim(id){
+  const claims=getClaims();const c=claims.find(c=>c.id===id);if(!c)return;
+  c.accounts_status='Processed';saveClaims(claims);renderAccountsClaims();
+  showToast('✅ Claim Processed',id+' — payment recorded');
+}
+
+function viewClaim(id){
+  const c=getClaims().find(c=>c.id===id);if(!c)return;
+  currentClaimId=id;
+  document.getElementById('claim-modal-content').innerHTML=buildClaimHTML(c);
+  document.getElementById('claim-modal').classList.add('open');
+}
+
+function buildClaimHTML(c){
+  const fmt=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2});
+  const convRows=(c.convRows||[]).map(r=>`<tr><td style="padding:6px 10px;border-bottom:1px solid #e8eef8;font-size:12px">${r.date||''}</td><td style="padding:6px 10px;border-bottom:1px solid #e8eef8;font-size:12px">${r.from||''}</td><td style="padding:6px 10px;border-bottom:1px solid #e8eef8;font-size:12px">${r.to||''}</td><td style="padding:6px 10px;border-bottom:1px solid #e8eef8;font-size:12px">${r.mode||''}</td><td style="padding:6px 10px;border-bottom:1px solid #e8eef8;font-size:12px;text-align:center">${r.kms||''}</td><td style="padding:6px 10px;border-bottom:1px solid #e8eef8;font-size:12px;text-align:right;font-weight:600">${fmt(r.amt)}</td></tr>`).join('');
+  const otherRows=(c.otherRows||[]).map(r=>`<tr><td style="padding:6px 10px;border-bottom:1px solid #e8eef8;font-size:12px">${r.date||''}</td><td style="padding:6px 10px;border-bottom:1px solid #e8eef8;font-size:12px">${r.desc||''}</td><td style="padding:6px 10px;border-bottom:1px solid #e8eef8;font-size:12px">${r.bill||''}</td><td style="padding:6px 10px;border-bottom:1px solid #e8eef8;font-size:12px;text-align:right;font-weight:600">${fmt(r.amt)}</td></tr>`).join('');
+  return `<div style="font-family:'DM Sans',Arial,sans-serif;background:#fff;color:#111;border-radius:10px;overflow:hidden;">
+  <div style="background:#080e1c;padding:18px 28px;display:flex;justify-content:space-between;align-items:center">
+    <div><div style="color:#fff;font-size:20px;font-weight:900;letter-spacing:2px">TWO99<span style="color:#00d4ff">®</span></div><div style="color:#8fa5c5;font-size:10px">Two99 Ecommerce Private Limited · 2nd Floor, Tower-D, Bhutani Techno Park, Sector-127, Noida</div></div>
+    <div style="text-align:right"><div style="color:#00d4ff;font-size:13px;font-weight:800">CLAIM FOR PAYMENT OF EXPENSES</div><div style="color:#8fa5c5;font-size:11px;margin-top:3px">${c.id} · ${c.date}</div></div>
+  </div>
+  <div style="background:#f0f6ff;padding:12px 28px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;border-bottom:1px solid #e0ecff">
+    <div><div style="font-size:9px;font-weight:700;color:#667;text-transform:uppercase;margin-bottom:2px">Employee Name</div><div style="font-size:13px;font-weight:700">${c.emp_name}</div></div>
+    <div><div style="font-size:9px;font-weight:700;color:#667;text-transform:uppercase;margin-bottom:2px">Designation</div><div style="font-size:13px">${c.designation}</div></div>
+    <div><div style="font-size:9px;font-weight:700;color:#667;text-transform:uppercase;margin-bottom:2px">Department</div><div style="font-size:13px">Two99</div></div>
+    <div><div style="font-size:9px;font-weight:700;color:#667;text-transform:uppercase;margin-bottom:2px">To</div><div style="font-size:13px">Accounts Department</div></div>
+    <div><div style="font-size:9px;font-weight:700;color:#667;text-transform:uppercase;margin-bottom:2px">RM Status</div><div style="font-size:13px;font-weight:700;color:${c.rm_status==='Approved'?'#00aa44':c.rm_status==='Rejected'?'#ff3333':'#ff9900'}">${c.rm_status}</div></div>
+    <div><div style="font-size:9px;font-weight:700;color:#667;text-transform:uppercase;margin-bottom:2px">Accounts</div><div style="font-size:13px;font-weight:700;color:${c.accounts_status==='Processed'?'#00aa44':'#ff9900'}">${c.accounts_status}</div></div>
+  </div>
+  <div style="padding:16px 28px">
+    <div style="font-size:11px;font-weight:800;color:#00aacc;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">CONVEYANCE EXPENSES</div>
+    <table style="width:100%;border-collapse:collapse"><thead><tr>${['Date','From','To','Mode','Kms','Amount'].map(h=>`<th style="padding:7px 10px;background:#f0f6ff;font-size:10px;font-weight:700;text-align:left;border-bottom:2px solid #e0ecff;text-transform:uppercase;color:#667">${h}</th>`).join('')}</tr></thead><tbody>${convRows||'<tr><td colspan="6" style="padding:8px 10px;font-size:12px;color:#aaa">No conveyance expenses</td></tr>'}</tbody></table>
+    <div style="text-align:right;padding:8px 10px;font-size:13px;font-weight:700;border-top:2px solid #e0ecff;margin-top:6px">Total Conveyance: ${fmt(c.convTotal)}</div>
+  </div>
+  <div style="padding:0 28px 16px">
+    <div style="font-size:11px;font-weight:800;color:#7060cc;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">OTHER EXPENSES</div>
+    <table style="width:100%;border-collapse:collapse"><thead><tr>${['Date','Description','Bill / Enclosure','Amount'].map(h=>`<th style="padding:7px 10px;background:#f8f0ff;font-size:10px;font-weight:700;text-align:left;border-bottom:2px solid #e0ecff;text-transform:uppercase;color:#667">${h}</th>`).join('')}</tr></thead><tbody>${otherRows||'<tr><td colspan="4" style="padding:8px 10px;font-size:12px;color:#aaa">No other expenses</td></tr>'}</tbody></table>
+    <div style="text-align:right;padding:8px 10px;font-size:13px;font-weight:700;border-top:2px solid #e0ecff;margin-top:6px">Total Other: ${fmt(c.otherTotal)}</div>
+  </div>
+  <div style="margin:0 28px 18px;background:#080e1c;border-radius:10px;padding:14px 20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+    <div style="text-align:center"><div style="color:#8fa5c5;font-size:10px;text-transform:uppercase;margin-bottom:4px">Grand Total</div><div style="color:#fff;font-size:20px;font-weight:900">₹${Number(c.grand||0).toLocaleString('en-IN')}</div></div>
+    <div style="text-align:center"><div style="color:#8fa5c5;font-size:10px;text-transform:uppercase;margin-bottom:4px">Advance Taken</div><div style="color:#ffab00;font-size:20px;font-weight:900">₹${Number(c.advance||0).toLocaleString('en-IN')}</div></div>
+    <div style="text-align:center"><div style="color:#8fa5c5;font-size:10px;text-transform:uppercase;margin-bottom:4px">Net to Reimburse</div><div style="color:#00d4ff;font-size:20px;font-weight:900">₹${Number(c.net||0).toLocaleString('en-IN')}</div></div>
+  </div>
+  <div style="padding:12px 28px;display:grid;grid-template-columns:1fr 1fr;gap:20px;border-top:1px solid #e0ecff">
+    <div style="font-size:11px;color:#888">(Claimant's Signature)<div style="margin-top:20px;border-top:1px solid #ccc;padding-top:4px">${c.emp_name}</div></div>
+    <div style="font-size:11px;color:#888;text-align:right">Approved By:<div style="margin-top:20px;border-top:1px solid #ccc;padding-top:4px;display:flex;justify-content:space-between">${c.rm||'—'}<span>Authorised Signatory</span></div></div>
+  </div>
+  <div style="padding:10px 28px;background:#f0f6ff;border-top:2px solid #e0ecff">
+    <div style="font-size:10px;font-weight:700;color:#667;text-transform:uppercase;margin-bottom:8px">For Account Use Only</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:11px">
+      <div>Process By: <strong>${c.process_by||'_______'}</strong></div>
+      <div>Ch No: <strong>${c.ch_no||'_______'}</strong> · Date: <strong>______</strong> · Bank: <strong>${c.bank||'_______'}</strong></div>
+      <div style="text-align:right">(Sign of Head of Accounts)</div>
+    </div>
+  </div>
+</div>`;
+}
+
+function downloadClaim(){
+  if(!currentClaimId)return;
+  const c=getClaims().find(cl=>cl.id===currentClaimId);if(!c)return;
+  const html=buildClaimHTML(c);
+  const page=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:20px;background:#e8edf5;font-family:Arial,sans-serif}</style></head><body>${html}</body></html>`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([page],{type:'text/html'}));
+  a.download='Claim_'+c.id+'_'+c.emp_name.replace(/\s+/g,'_')+'.html';
+  a.click();showToast('⬇ Downloaded','Claim '+c.id+' downloaded');
+}
+
+function initReimbursement(){
+  calcTotals();
+  // Show approval tab for RMs and admins
+  const at=document.getElementById('reimb-approve-tab');
+  const act=document.getElementById('reimb-accounts-tab');
+  if(at&&currentUser?.isAdmin)at.style.display='block';
+  if(act&&currentUser?.isAdmin)act.style.display='block';
+  // Show approve tab for RMs
+  const isRM=EMPLOYEES.some(e=>e.rm===currentUser?.name);
+  if(at&&isRM)at.style.display='block';
+  renderMyClaims();
+}
+
+// ══════════════════════════════════════════
+// PERFORMANCE NC/PF
+// ══════════════════════════════════════════
+function getNCPF(){return JSON.parse(localStorage.getItem('ncpf')||'[]');}
+function saveNCPF(a){localStorage.setItem('ncpf',JSON.stringify(a));}
+
+function initPerformance(){
+  renderNCPFHistory();
+  updateNCPFScore();
+  const sel=document.getElementById('ncpf-emp');
+  if(sel&&sel.options.length<=1){
+    EMPLOYEES.forEach(e=>{const o=document.createElement('option');o.value=e.id;o.textContent=e.name+' — '+e.designation;sel.appendChild(o);});
+  }
+  document.getElementById('ncpf-date').value=todayStr();
+  // Show form only to admins and RMs
+  const form=document.getElementById('ncpf-log-form');
+  const isRM=currentUser&&EMPLOYEES.some(e=>e.rm===currentUser.name);
+  if(form)form.style.display=(currentUser?.isAdmin||isRM)?'block':'none';
+}
+
+function logNCPF(){
+  const emp_id=document.getElementById('ncpf-emp').value;
+  const score=parseInt(document.getElementById('ncpf-type').value);
+  const date=document.getElementById('ncpf-date').value;
+  const desc=document.getElementById('ncpf-desc').value.trim();
+  const impact=document.getElementById('ncpf-impact').value.trim();
+  if(!emp_id||!desc){showToast('Missing Fields','Please select employee and describe the incident.');return;}
+  const emp=EMPLOYEES.find(e=>e.id===emp_id);
+  const records=getNCPF();
+  records.unshift({
+    id:'NP-'+String(records.length+1).padStart(3,'0'),
+    emp_id,emp_name:emp?.name||'',score,date,desc,impact,
+    logged_by:currentUser?.name||'',logged_by_id:currentUser?.id||'',
+    logged_on:todayStr(),status:'Active',
+  });
+  saveNCPF(records);
+  renderNCPFHistory();updateNCPFScore();
+  const icon=score>0?'⭐':'⚠️';
+  addNotif(icon,score>0?'PF Score Logged':'NC Score Logged',emp?.name+' '+score+' — '+desc.slice(0,40),'Just now');
+  showToast(icon+' Score Logged','Score '+score+' assigned to '+emp?.name);
+  ['ncpf-desc','ncpf-impact'].forEach(id=>document.getElementById(id).value='');
+}
+
+function getMyNCPF(){return getNCPF().filter(r=>r.emp_id===currentUser?.id);}
+
+function updateNCPFScore(){
+  const mine=getMyNCPF();
+  const now=new Date();const month=now.getMonth(),year=now.getFullYear();
+  const monthRecs=mine.filter(r=>{const d=new Date(r.logged_on);return d.getMonth()===month&&d.getFullYear()===year;});
+  const pfTotal=monthRecs.filter(r=>r.score>0).reduce((s,r)=>s+r.score,0);
+  const ncTotal=monthRecs.filter(r=>r.score<0).reduce((s,r)=>s+r.score,0);
+  const net=pfTotal+ncTotal;
+  const pfEl=document.getElementById('pf-total');const ncEl=document.getElementById('nc-total');const netEl=document.getElementById('net-score');
+  if(pfEl)pfEl.textContent='+'+pfTotal;if(ncEl)ncEl.textContent=''+ncTotal;
+  if(netEl){netEl.textContent=net>0?'+'+net:net;netEl.style.color=net>0?'var(--green)':net<0?'var(--red)':'var(--cyan)';}
+}
+
+function renderNCPFHistory(){
+  const tbody=document.getElementById('ncpf-history-body');if(!tbody)return;
+  const isRM=currentUser&&EMPLOYEES.some(e=>e.rm===currentUser.name);
+  const isAdmin=currentUser?.isAdmin;
+  let records=getNCPF();
+  if(!isAdmin&&!isRM)records=records.filter(r=>r.emp_id===currentUser?.id);
+  else if(isRM&&!isAdmin){
+    const myTeam=EMPLOYEES.filter(e=>e.rm===currentUser.name).map(e=>e.id);
+    records=records.filter(r=>myTeam.includes(r.emp_id)||r.emp_id===currentUser?.id);
+  }
+  if(!records.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">No scores recorded yet.</td></tr>';return;}
+  tbody.innerHTML=records.map(r=>`<tr>
+    <td style="font-size:11px;color:var(--text2)">${r.date||r.logged_on}</td>
+    <td style="font-size:12px;font-weight:600">${r.emp_name}</td>
+    <td><span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:${r.score>0?'var(--green)':'var(--red)'}">${r.score>0?'+':''}${r.score}</span></td>
+    <td style="font-size:11px;color:var(--text2)">${r.logged_by}</td>
+    <td style="font-size:11px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.desc}">${r.desc}</td>
+    <td><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(0,212,255,.1);color:var(--cyan)">${r.status}</span></td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════════════
+// RM PORTAL
+// ══════════════════════════════════════════
+function switchRMTab(tab,el){
+  ['attendance','tasks','ncpf','claims'].forEach(t=>{const e=document.getElementById('rmt-'+t);if(e)e.style.display='none';});
+  const tEl=document.getElementById('rmt-'+tab);if(tEl)tEl.style.display='block';
+  document.querySelectorAll('#rm-tabs .tab-pill').forEach(p=>p.classList.remove('active'));
+  if(el)el.classList.add('active');
+  if(tab==='attendance')renderRMAttendance();
+  if(tab==='tasks')renderRMTasks();
+  if(tab==='ncpf')renderRMNCPF();
+  if(tab==='claims')renderRMClaims();
+}
+
+function getMyTeam(){
+  if(!currentUser)return[];
+  return EMPLOYEES.filter(e=>e.rm===currentUser.name||(currentUser.isAdmin));
+}
+
+function renderRMAttendance(){
+  const tbody=document.getElementById('rm-att-body');if(!tbody)return;
+  const team=getMyTeam();const today=todayStr();
+  const todayLeaves=[];
+  EMPLOYEES.forEach(emp=>{
+    const leaves=JSON.parse(localStorage.getItem('leaves_'+emp.id)||'[]');
+    leaves.forEach(lv=>{if(lv.status!=='Rejected'&&lv.from<=today&&lv.to>=today)todayLeaves.push(emp.id);});
+  });
+  tbody.innerHTML=team.map(emp=>{
+    const attLog=JSON.parse(localStorage.getItem('attLog_'+emp.id)||'[]');
+    const todayLog=attLog.find(a=>a.date===today)||null;
+    const onLeave=todayLeaves.includes(emp.id);
+    return `<tr>
+      <td style="font-weight:600;font-size:13px">${emp.name}</td>
+      <td style="color:var(--green);font-weight:600">${todayLog?todayLog.inTime:'—'}</td>
+      <td style="color:var(--red);font-weight:600">${todayLog?.outTime||'—'}</td>
+      <td style="color:var(--amber)">${todayLog?formatDur(todayLog.dur):'—'}</td>
+      <td>${onLeave?'<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(255,171,0,.12);color:var(--amber)">On Leave</span>':todayLog?'<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(0,230,118,.12);color:var(--green)">Present</span>':'<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(143,165,197,.1);color:var(--text2)">Not Recorded</span>'}</td>
+      <td style="font-size:11px;color:var(--amber)">${onLeave?'Yes':'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderRMTasks(){
+  const tbody=document.getElementById('rm-tasks-body');if(!tbody)return;
+  const team=getMyTeam();const rows=[];
+  team.forEach(emp=>{
+    const tasks=JSON.parse(localStorage.getItem('tasks_'+emp.id)||'[]');
+    tasks.slice(0,5).forEach(t=>rows.push({...t,empName:emp.name}));
+  });
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No tasks found for your team.</td></tr>';return;}
+  tbody.innerHTML=rows.map(t=>`<tr>
+    <td style="font-weight:600;font-size:12px">${t.empName}</td>
+    <td style="font-size:11px;color:var(--text2)">${t.date||'—'}</td>
+    <td style="font-size:12px;font-weight:500;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.client||'—'}</td>
+    <td style="font-size:12px">${t.task||'—'}</td>
+    <td style="font-size:11px;color:var(--text2)">${t.subtask||'—'}</td>
+    <td>${statusBadge(t.status)}</td>
+    <td style="font-size:12px;color:var(--cyan)">${t.hours||'—'}</td>
+  </tr>`).join('');
+}
+
+function renderRMNCPF(){
+  const tbody=document.getElementById('rm-ncpf-body');if(!tbody)return;
+  const team=getMyTeam();
+  const now=new Date();const month=now.getMonth(),year=now.getFullYear();
+  tbody.innerHTML=team.map(emp=>{
+    const recs=getNCPF().filter(r=>r.emp_id===emp.id);
+    const monthRecs=recs.filter(r=>{const d=new Date(r.logged_on);return d.getMonth()===month&&d.getFullYear()===year;});
+    const pf=monthRecs.filter(r=>r.score>0).reduce((s,r)=>s+r.score,0);
+    const nc=monthRecs.filter(r=>r.score<0).reduce((s,r)=>s+r.score,0);
+    const net=pf+nc;
+    const standing=net>=10?'🌟 Excellent':net>=0?'✅ Good':net>=-10?'⚠️ Watch':'🔴 Alert';
+    return `<tr>
+      <td style="font-weight:600;font-size:13px">${emp.name}</td>
+      <td style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${net>0?'var(--green)':net<0?'var(--red)':'var(--text2)'}">${net>0?'+':''}${net}</td>
+      <td style="color:var(--green);font-weight:700">+${pf}</td>
+      <td style="color:var(--red);font-weight:700">${nc}</td>
+      <td style="font-size:12px">${standing}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderRMClaims(){
+  const tbody=document.getElementById('rm-claims-body');if(!tbody)return;
+  const claims=getClaims().filter(c=>c.rm===currentUser?.name&&c.rm_status==='Pending');
+  if(!claims.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">No pending claims.</td></tr>';return;}
+  tbody.innerHTML=claims.map(c=>`<tr>
+    <td style="font-family:monospace;font-size:12px;color:var(--cyan);font-weight:700">${c.id}</td>
+    <td style="font-size:13px;font-weight:600">${c.emp_name}</td>
+    <td style="font-size:13px;font-weight:700">₹${(c.grand||0).toLocaleString('en-IN')}</td>
+    <td style="font-size:11px;color:var(--text2)">${c.date}</td>
+    <td style="display:flex;gap:5px">
+      <button onclick="approveClaim('${c.id}','Approved')" style="font-size:10px;background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.3);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--green)">✓ Approve</button>
+      <button onclick="viewClaim('${c.id}')" style="font-size:10px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--text2)">View</button>
+    </td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════════════
+// ATTENDANCE ENHANCEMENTS
+// ══════════════════════════════════════════
+// Partial Day / On Duty requests
+function getAttRequests(){return JSON.parse(localStorage.getItem('att_requests')||'[]');}
+function saveAttRequests(a){localStorage.setItem('att_requests',JSON.stringify(a));}
+
+// Enhanced clock functions handle partial day and On Duty in attendance
+// These are shown as special entries in the log
+function submitAttRequest(type,reason,time){
+  if(!currentUser)return;
+  const req={
+    id:'ATT-'+Date.now(),type,reason,time,
+    emp_id:currentUser.id,emp_name:currentUser.name,
+    date:todayStr(),status:'Pending',
+    rm:currentUser.rm,
+  };
+  const reqs=getAttRequests();reqs.unshift(req);saveAttRequests(reqs);
+  addNotif('📋','Attendance Request',''+type+' request for '+todayStr()+' sent to '+currentUser.rm,'Just now');
+  showToast('📋 Request Submitted',type+' request sent to '+currentUser.rm);
+}
+
+// Missed punch alert
+function checkMissedPunch(){
+  if(!currentUser)return;
+  const now=new Date();
+  const hour=now.getHours();
+  if(hour>=12&&clockedIn===false){
+    const key='missed_alert_'+currentUser.id+'_'+todayStr();
+    if(!localStorage.getItem(key)){
+      localStorage.setItem(key,'1');
+      addNotif('🚨','Missed Punch Alert','No clock-in recorded today. Please regularise with HR immediately.','Auto-Alert');
+      showToast('🚨 Missed Punch!','No clock-in recorded. HR and your RM have been notified.');
+    }
+  }
+}
+
+// ══════════════════════════════════════════
+// ADD EMPLOYEE (Admin)
+// ══════════════════════════════════════════
+function getCustomEmps(){return JSON.parse(localStorage.getItem('custom_employees')||'[]');}
+function saveCustomEmps(a){localStorage.setItem('custom_employees',JSON.stringify(a));}
+
+function initAddEmployee(){
+  // Populate RM dropdown
+  const sel=document.getElementById('new-rm');
+  if(sel&&sel.options.length<=1){
+    const rms=['Arti Chaudhary','Agam Chaudhary','Umar Daraz','Kanishak Rajpal','Abhishek Chaudhary'];
+    rms.forEach(rm=>{const o=document.createElement('option');o.value=rm;o.textContent=rm;sel.appendChild(o);});
+  }
+  renderEmpList();
+}
+
+function addNewEmployee(){
+  const name=document.getElementById('new-name').value.trim();
+  const desig=document.getElementById('new-desig').value.trim();
+  const email=document.getElementById('new-email').value.trim();
+  const phone=document.getElementById('new-phone').value.trim();
+  const dob=document.getElementById('new-dob').value;
+  const doj=document.getElementById('new-doj').value;
+  const rm=document.getElementById('new-rm').value;
+  const address=document.getElementById('new-address').value.trim();
+  const isAdmin=document.getElementById('new-admin').value==='true';
+  const tkey=document.getElementById('new-tkey').value.trim()||name.split(' ')[0];
+  if(!name||!desig||!rm){showEmpMsg('Please fill in Name, Designation and Reporting Manager.','error');return;}
+  const id='emp_'+Date.now();
+  const emp={id,name,designation:desig,email,phone,dob:dob||null,dom:null,doj:doj||null,address,rm,rm_email:'',isAdmin,tasks_key:tkey};
+  const emps=getCustomEmps();emps.push(emp);saveCustomEmps(emps);
+  // Also update select on login page
+  const opt=document.createElement('option');opt.value=id;opt.textContent=name+' — '+desig;
+  document.getElementById('emp-select').appendChild(opt);
+  showEmpMsg('✓ '+name+' added successfully! They can now log in from the employee dropdown.','success');
+  ['new-name','new-desig','new-email','new-phone','new-address','new-tkey'].forEach(i=>document.getElementById(i).value='');
+  renderEmpList();
+  addNotif('➕','Employee Added',name+' — '+desig+' (RM: '+rm+')','Just now');
+}
+
+function showEmpMsg(msg,type){
+  const el=document.getElementById('add-emp-msg');if(!el)return;
+  el.style.display='block';
+  el.style.background=type==='success'?'rgba(0,230,118,.1)':'rgba(255,82,82,.1)';
+  el.style.color=type==='success'?'var(--green)':'var(--red)';
+  el.textContent=msg;
+  setTimeout(()=>el.style.display='none',5000);
+}
+
+function renderEmpList(){
+  const tbody=document.getElementById('emp-list-body');if(!tbody)return;
+  const all=[...EMPLOYEES,...getCustomEmps()];
+  tbody.innerHTML=all.map(e=>`<tr>
+    <td style="font-size:12px;font-weight:600">${e.name}</td>
+    <td style="font-size:11px;color:var(--text2)">${e.designation}</td>
+    <td style="font-size:11px;color:var(--cyan)">${e.rm||'—'}</td>
+    <td style="font-size:11px;color:var(--text2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.email||'—'}</td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════════════
+// PATCH showPage + doLogin + PAGE_INFO
+// ══════════════════════════════════════════
+Object.assign(PAGE_INFO,{
+  reimbursement:['Reimbursement Claims','Submit and track expense reimbursements'],
+  performance:['Performance — NC/PF','Monthly score tracking and history'],
+  'rm-portal':['My Team (RM View)','Team attendance, tasks, and NC/PF overview'],
+  'add-employee':['Add Employee','Manage employee records (Admin only)'],
+});
+
+const _spV5=showPage;
+showPage=function(page,navEl){
+  _spV5(page,navEl);
+  if(page==='reimbursement')initReimbursement();
+  if(page==='performance')initPerformance();
+  if(page==='rm-portal'){renderRMAttendance();}
+  if(page==='add-employee')initAddEmployee();
+};
+
+const _dlV5=doLogin;
+doLogin=function(){
+  _dlV5();
+  setTimeout(()=>{
+    // Show RM Portal nav for RMs and admins
+    const isRM=currentUser&&EMPLOYEES.some(e=>e.rm===currentUser.name);
+    const rmNav=document.getElementById('rm-portal-nav');
+    if(rmNav&&(isRM||currentUser?.isAdmin))rmNav.style.display='flex';
+    // Show Add Employee nav for admins only
+    const addNav=document.getElementById('add-emp-nav');
+    if(addNav&&currentUser?.isAdmin)addNav.style.display='flex';
+    // Load custom employees into dropdown
+    getCustomEmps().forEach(e=>{
+      const existing=document.querySelector(`#emp-select option[value="${e.id}"]`);
+      if(!existing){const opt=document.createElement('option');opt.value=e.id;opt.textContent=e.name+' — '+e.designation;document.getElementById('emp-select').appendChild(opt);}
+    });
+    // Check missed punch at noon
+    checkMissedPunch();
+  },700);
 };
 
 // ═══════════════════ START ═══════════════════
