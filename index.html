@@ -844,6 +844,9 @@ h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
         <div class="nav-item" onclick="showPage('policies',this)"><span class="nav-icon">📋</span>HR Policies</div>
         <div class="nav-item" onclick="showPage('announcements',this)"><span class="nav-icon">📢</span>Announcements</div>
         <div class="nav-item" onclick="showPage('email',this)"><span class="nav-icon">📧</span>Email</div>
+        <div class="nav-item" onclick="showPage('tickets',this)"><span class="nav-icon">🎫</span>Raise a Ticket</div>
+        <div class="nav-item" onclick="showPage('salary',this)"><span class="nav-icon">💰</span>Salary Slips</div>
+        <div class="nav-item" onclick="showPage('onleave',this)"><span class="nav-icon">🌴</span>Who's On Leave</div>
         <div class="nav-item" onclick="showPage('celebrations',this)"><span class="nav-icon">🎉</span>Celebrations</div>
         <div class="nav-item" onclick="showPage('chat',this)"><span class="nav-icon">💬</span>Team Chat</div>
         <div class="nav-item" id="admin-nav-item" style="display:none" onclick="showPage('admin',this)"><span class="nav-icon">⊿</span>Admin View</div>
@@ -935,6 +938,8 @@ h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
         <div class="meetings-card" id="dash-meetings">
           <div class="empty-state"><div class="empty-icon">📅</div><p>No meetings today.<br>Go to Meetings to schedule one.</p></div>
         </div>
+        <div class="section-header" style="margin-top:18px;"><h4>🌴 Who's On Leave This Week</h4><button class="btn-outline" onclick="showPage('onleave',null)" style="font-size:12px">View All →</button></div>
+        <div id="dash-on-leave"></div>
       </div>
 
       <!-- ═══ TASKS ═══ -->
@@ -1562,6 +1567,101 @@ h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
         </div>
       </div>
 
+      <!-- ═══ TICKETS ═══ -->
+      <div class="page" id="page-tickets">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+          <div class="stat-card"><div class="accent-line" style="background:var(--cyan)"></div><div class="stat-label">Open Tickets</div><div class="stat-val" id="tickets-open-count" style="color:var(--cyan)">0</div><div class="stat-sub">Awaiting action</div></div>
+          <div class="stat-card"><div class="accent-line" style="background:var(--amber)"></div><div class="stat-label">In Progress</div><div class="stat-val" id="tickets-inprog-count" style="color:var(--amber)">0</div><div class="stat-sub">Being worked on</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:380px 1fr;gap:16px;align-items:start;">
+          <!-- Raise Ticket Form -->
+          <div class="profile-card" style="margin-bottom:0;">
+            <h4 style="margin-bottom:5px;">🎫 Raise a New Ticket</h4>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:16px;">Raise a ticket for grievances, requests, IT issues, or feedback.</p>
+            <div style="display:flex;flex-direction:column;gap:11px;">
+              <div class="form-field"><label>Title / Subject</label><input type="text" id="ticket-title" placeholder="Brief description of the issue"></div>
+              <div class="form-field"><label>Category</label>
+                <select id="ticket-category">
+                  <option>HR & Policy</option><option>IT & Systems</option><option>Payroll & Finance</option>
+                  <option>Team Grievance</option><option>Client Issue</option><option>Process Improvement</option><option>Other</option>
+                </select></div>
+              <div class="form-field"><label>Priority</label>
+                <select id="ticket-priority"><option>Low</option><option selected>Medium</option><option>High</option></select></div>
+              <div class="form-field"><label>Assign To</label>
+                <select id="ticket-assignee"><option value="">— Select Person —</option></select></div>
+              <div class="form-field"><label>Description</label>
+                <textarea id="ticket-desc" style="min-height:90px;" placeholder="Describe the issue in detail..."></textarea></div>
+            </div>
+            <button class="btn-primary" onclick="submitTicket()" style="width:100%;justify-content:center;margin-top:14px;">🎫 Submit Ticket</button>
+          </div>
+          <!-- Tickets List -->
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+              <select id="ticket-filter-status" onchange="renderTicketsList()" style="background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:7px 11px;color:var(--text);font-size:12px;outline:none;">
+                <option value="all">All Statuses</option><option>Open</option><option>Inprogress</option><option>Resolved</option><option>Closed</option>
+              </select>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;">
+                <input type="checkbox" id="ticket-filter-me" onchange="renderTicketsList()" style="cursor:pointer;"> My Tickets Only
+              </label>
+            </div>
+            <div class="tasks-table-wrap" style="margin-bottom:0;">
+              <table class="tasks-table">
+                <thead><tr><th>ID</th><th>Title</th><th>Category</th><th>Priority</th><th>Raised By</th><th>Assigned To</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+                <tbody id="tickets-all-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SALARY SLIPS ═══ -->
+      <div class="page" id="page-salary">
+        <div class="profile-card" style="margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div>
+              <h4 style="margin-bottom:4px;">💰 Salary Slips</h4>
+              <p style="font-size:12px;color:var(--text2);">View and download your monthly salary slips. Slip amounts are indicative — contact HR/Accounts for actuals.</p>
+            </div>
+            <div style="background:var(--cyan-glow);border:1px solid rgba(0,212,255,.2);border-radius:9px;padding:8px 16px;text-align:center;">
+              <div class="stat-label">Available</div>
+              <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--cyan)">6</div>
+            </div>
+          </div>
+          <div id="salary-slip-list"></div>
+        </div>
+        <div class="profile-card" style="background:rgba(255,171,0,.05);border-color:rgba(255,171,0,.2);">
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;">
+            <strong style="color:var(--amber)">📌 Note:</strong> Salary slip amounts shown are illustrative. Your actual CTC, deductions (PF, ESIC, PT), and net pay are managed by the Accounts team. For corrections or queries, email <strong>accounts@two99.org</strong> with your Employee ID.
+          </div>
+        </div>
+      </div>
+
+      <!-- SALARY SLIP MODAL -->
+      <div class="modal-overlay" id="salary-modal">
+        <div class="modal" style="width:720px;padding:0;background:transparent;border:none;box-shadow:none;">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:10px;gap:8px;">
+            <button onclick="downloadSlipFromModal()" class="btn-primary" style="font-size:12px;padding:8px 16px;">⬇ Download HTML</button>
+            <button onclick="document.getElementById('salary-modal').classList.remove('open')" class="btn-outline" style="font-size:12px;padding:8px 14px;background:var(--card);">✕ Close</button>
+          </div>
+          <div id="salary-modal-content" style="overflow-y:auto;max-height:80vh;border-radius:12px;"></div>
+        </div>
+      </div>
+
+      <!-- ═══ WHO'S ON LEAVE ═══ -->
+      <div class="page" id="page-onleave">
+        <div class="welcome-banner" style="margin-bottom:18px;">
+          <div><h2 style="font-size:18px;margin-bottom:3px;">🌴 Team Leave Status</h2><p style="font-size:12px;color:var(--text2)">Approved and pending leave applications visible to all employees.</p></div>
+          <div style="text-align:right;"><div class="wday">Week of</div><strong id="onleave-week-label" style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--cyan);">—</strong></div>
+        </div>
+        <div class="tab-pills" id="onleave-tabs">
+          <div class="tab-pill active" onclick="switchOnLeaveTab('week',this)">This Week</div>
+          <div class="tab-pill" onclick="switchOnLeaveTab('today',this)">Today</div>
+          <div class="tab-pill" onclick="switchOnLeaveTab('month',this)">This Month</div>
+          <div class="tab-pill" onclick="switchOnLeaveTab('all',this)">All Upcoming</div>
+        </div>
+        <div id="on-leave-week"></div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -1616,7 +1716,7 @@ const EMPLOYEES = [
   {id:"divyansh",name:"Divyansh Agarwal",designation:"Accounts Manager",dob:"1995-04-26",dom:null,doj:"2024-12-16",email:"accounts@two99.org",phone:"7300923159",address:"118/1, Mukund Nagar, Ghaziabad, UP",rm:"Arti Chaudhary",rm_email:"arti.chaudhary@two99ecommerce.com",isAdmin:false,tasks_key:"Divyansh"},
   {id:"anand",name:"Anand Raj",designation:"SEO Executive",dob:"2001-08-12",dom:null,doj:"2024-02-12",email:"Anand.Raj@two99ecommerce.com",phone:"8092154769",address:"Shastri Nagar, Muzaffarpur, Bihar",rm:"Umar Daraz",rm_email:"Umar.daraz@two99.org",isAdmin:false,tasks_key:"Anand"},
   {id:"vikram",name:"Vikram Tomar",designation:"Growth Manager \u2013 AI, Web3",dob:"1998-12-03",dom:null,doj:"2024-12-09",email:"vikram.tomar@two99.org",phone:"9811505259",address:"34/6, West Patel Nagar, New Delhi",rm:"Agam Chaudhary",rm_email:"hello@two99.org",isAdmin:true,tasks_key:"Vikram"},
-  {id:"umar",name:"Umar Daraz",designation:"Digital Lead",dob:"1988-07-05",dom:"2014-12-28",doj:"2025-01-06",email:"Umar.daraz@two99.org",phone:"9990789624",address:"16, Gali No. 5, Sangam Vihar, Wazirabad, Delhi",rm:"Arti Chaudhary",rm_email:"arti.chaudhary@two99ecommerce.com",isAdmin:true,tasks_key:"Umar"},
+  {id:"umar",name:"Umar Daraz",designation:"Digital Lead",dob:"1988-07-05",dom:"2014-12-28",doj:"2025-01-06",email:"Umar.daraz@two99.org",phone:"9990789624",address:"16 Gali No.5, Sangam Vihar, Wazirabad, Delhi",rm:"Arti Chaudhary",rm_email:"arti.chaudhary@two99ecommerce.com",isAdmin:true,tasks_key:"Umar"},
   {id:"jenifer",name:"Jenifer Massey",designation:"Content & Community Manager",dob:"1996-05-06",dom:null,doj:"2025-06-09",email:"jenifer.massey@two99ecommerce.com",phone:"7065098008",address:"C-145, Beta 1, Greater Noida",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Jenifer"},
   {id:"harsh",name:"Harsh Mishra",designation:"Content Development Lead",dob:"2001-08-08",dom:null,doj:"2025-08-04",email:"harsh.mishra@two99ecommerce.com",phone:"8650849271",address:"Tirupati Golden Park, Pilbhit, UP",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Harsh"},
   {id:"sunny",name:"Sunny Tanwar",designation:"VP \u2013 Brand Strategist",dob:"1990-08-11",dom:"2021-02-07",doj:"2025-11-05",email:"sunny.tanwar@two99.org",phone:"9990822232",address:"336/4A, Govind Puri, Kalkaji, New Delhi",rm:"Agam Chaudhary",rm_email:"hello@two99.org",isAdmin:true,tasks_key:"Sunny"},
@@ -1624,21 +1724,21 @@ const EMPLOYEES = [
   {id:"kanishak",name:"Kanishak Rajpal",designation:"Creative & Communications Director",dob:"1989-07-02",dom:"2024-12-04",doj:"2022-08-01",email:"Kanishak.rajpal@two99ecommerce.com",phone:"9953428841",address:"Q-516, Dilshad Garden, Delhi",rm:"Agam Chaudhary",rm_email:"hello@two99.org",isAdmin:true,tasks_key:"Kanishak"},
   {id:"puru",name:"Purnendu Kashyap",designation:"UI/UX Designer",dob:"2001-07-07",dom:null,doj:"2024-07-15",email:"purnendu.kashyap@two99marketing.com",phone:"8368657646",address:"Alpha 01, Greater Noida",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Puru"},
   {id:"jimmy",name:"Jimesh Khatri",designation:"Senior Graphic Designer",dob:"1990-03-23",dom:null,doj:"2024-07-09",email:"jimesh.khatri@two99marketing.com",phone:"9016312309",address:"Bhimnath Society, Ahmedabad, Gujarat",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Jimmy"},
-  {id:"astitwa",name:"Astitwa Dwivedi",designation:"AI Growth Manager",dob:"2003-05-25",dom:null,doj:"2025-07-01",email:"astitwa.dwivedi@two99marketing.com",phone:"9140698472",address:"Exact PG, Raipur, UP",rm:"Abhishek",rm_email:"abhishek@two99.org",isAdmin:true,tasks_key:"Astitwa"},
+  {id:"astitwa",name:"Astitwa Dwivedi",designation:"AI Growth Manager",dob:"2003-05-25",dom:null,doj:"2025-07-01",email:"astitwa.dwivedi@two99marketing.com",phone:"9140698472",address:"Exact PG, Raipur, UP",rm:"Abhishek Chaudhary",rm_email:"abhishek.chaudhary@two99.org",isAdmin:true,tasks_key:"Astitwa"},
   {id:"rishi",name:"Rishi Gupta",designation:"Digital Community Manager",dob:"2006-06-16",dom:null,doj:"2025-08-06",email:"rishi.gupta@two99marketing.com",phone:"9811359590",address:"Aditya World City, Ghaziabad",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Rishi"},
   {id:"shobhan",name:"Shobhan Sharma",designation:"Video Editor",dob:"2006-09-04",dom:null,doj:"2025-10-06",email:"Shobhan.sharma@two99marketing.com",phone:"9910016009",address:"360 Govindpuram, Ghaziabad",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Shobhan"},
   {id:"kritika",name:"Kritika",designation:"HR & Admin Manager",dob:"1995-02-10",dom:null,doj:"2025-12-08",email:"hr@two99.org",phone:"9650354611",address:"A-140, Sec-7, Dwarka, New Delhi",rm:"Arti Chaudhary",rm_email:"arti.chaudhary@two99ecommerce.com",isAdmin:true,tasks_key:"Kritika"},
   {id:"simran",name:"Simran Kaur",designation:"EA to Director",dob:"1997-09-26",dom:null,doj:"2026-02-02",email:"simran.kaur@two99.org",phone:"7827833510",address:"A-171, Sector-19, Noida",rm:"Agam Chaudhary",rm_email:"hello@two99.org",isAdmin:false,tasks_key:"Simran"},
   {id:"amit",name:"Amit Ghildiyal",designation:"Consultant",dob:null,dom:null,doj:null,email:"amit.ghildiyal@two99.org",phone:"9818456952",address:"Gwal Pahari, Gurgaon",rm:"Agam Chaudhary",rm_email:"hello@two99.org",isAdmin:false,tasks_key:"Amit"},
-  {id:"ayush_ag",name:"Ayush Agarwal",designation:"AI & Software Dev Intern",dob:"2005-09-25",dom:null,doj:"2026-03-18",email:"ayush.agarwal@two99marketing.com",phone:"9257143673",address:"Begampur Extension, Delhi",rm:"Abhishek",rm_email:"abhishek@two99.org",isAdmin:false,tasks_key:"Ayush Agarwal"},
-  {id:"kunal",name:"Kunal Tomar",designation:"AI & Software Dev Intern",dob:"2002-06-04",dom:null,doj:"2026-03-18",email:"kunal.tomar@two99marketing.com",phone:"7683072807",address:"Shahdara, Delhi",rm:"Abhishek",rm_email:"abhishek@two99.org",isAdmin:false,tasks_key:"Kunal"},
-  {id:"aditya",name:"Aditya Srivastava",designation:"AI & Software Dev Intern",dob:"2001-10-27",dom:null,doj:"2026-03-18",email:"aditya.srivastava@two99marketing.com",phone:"8076598811",address:"Greater Noida West, UP",rm:"Abhishek",rm_email:"abhishek@two99.org",isAdmin:false,tasks_key:"Aditya"},
-  {id:"parteek",name:"Parteek Chauhan",designation:"AI & Software Dev Intern",dob:"2004-08-18",dom:null,doj:"2026-04-27",email:"parteek.chauhan@two99marketing.com",phone:"9815377025",address:"Dera Bassi, Mohali, Punjab",rm:"Abhishek",rm_email:"abhishek@two99.org",isAdmin:false,tasks_key:"Parteek"},
+  {id:"ayush_ag",name:"Ayush Agarwal",designation:"AI & Software Dev Intern",dob:"2005-09-25",dom:null,doj:"2026-03-18",email:"ayush.agarwal@two99marketing.com",phone:"9257143673",address:"Begampur Extension, Delhi",rm:"Abhishek Chaudhary",rm_email:"abhishek.chaudhary@two99.org",isAdmin:false,tasks_key:"Ayush Agarwal"},
+  {id:"kunal",name:"Kunal Tomar",designation:"AI & Software Dev Intern",dob:"2002-06-04",dom:null,doj:"2026-03-18",email:"kunal.tomar@two99marketing.com",phone:"7683072807",address:"Shahdara, Delhi",rm:"Abhishek Chaudhary",rm_email:"abhishek.chaudhary@two99.org",isAdmin:false,tasks_key:"Kunal"},
+  {id:"aditya",name:"Aditya Srivastava",designation:"AI & Software Dev Intern",dob:"2001-10-27",dom:null,doj:"2026-03-18",email:"aditya.srivastava@two99marketing.com",phone:"8076598811",address:"Greater Noida West, UP",rm:"Abhishek Chaudhary",rm_email:"abhishek.chaudhary@two99.org",isAdmin:false,tasks_key:"Aditya"},
+  {id:"parteek",name:"Parteek Chauhan",designation:"AI & Software Dev Intern",dob:"2004-08-18",dom:null,doj:"2026-04-27",email:"parteek.chauhan@two99marketing.com",phone:"9815377025",address:"Dera Bassi, Mohali, Punjab",rm:"Abhishek Chaudhary",rm_email:"abhishek.chaudhary@two99.org",isAdmin:false,tasks_key:"Parteek"},
   {id:"sahil",name:"Sahil Thakur",designation:"SEO Specialist",dob:"2002-02-19",dom:null,doj:"2024-09-01",email:"sahil.thakur@two99ecommerce.com",phone:"9205033510",address:"Dr. Ambedkar Nagar, Sector-6, New Delhi",rm:"Umar Daraz",rm_email:"Umar.daraz@two99.org",isAdmin:false,tasks_key:"Sahil"},
   {id:"shubham",name:"Shubham Raj Rathaur",designation:"Frontend Developer Intern",dob:"2004-04-04",dom:null,doj:"2025-12-01",email:"shubham.rathaur@two99ecommerce.com",phone:"8809495722",address:"Vill-Gijhore, Sector 53, Noida",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Shubham"},
   {id:"ayush",name:"Ayush",designation:"Development / UI Designer",dob:null,dom:null,doj:"2024-06-01",email:"",phone:"",address:"",rm:"Kanishak Rajpal",rm_email:"Kanishak.rajpal@two99ecommerce.com",isAdmin:false,tasks_key:"Ayush"}
 ];
-const RM = {"divyansh":"Arti Chaudhary","anand":"Umar Daraz","vikram":"Agam Chaudhary","umar":"Arti Chaudhary","jenifer":"Kanishak Rajpal","harsh":"Kanishak Rajpal","sunny":"Agam Chaudhary","rajesh":"Umar Daraz","kanishak":"Agam Chaudhary","puru":"Kanishak Rajpal","jimmy":"Kanishak Rajpal","astitwa":"Abhishek","rishi":"Kanishak Rajpal","shobhan":"Kanishak Rajpal","kritika":"Arti Chaudhary","simran":"Agam Chaudhary","amit":"Agam Chaudhary","ayush_ag":"Abhishek","kunal":"Abhishek","aditya":"Abhishek","parteek":"Abhishek","sahil":"Umar Daraz","shubham":"Kanishak Rajpal","ayush":"Kanishak Rajpal"};
+const RM = {"divyansh":"Arti Chaudhary","anand":"Umar Daraz","vikram":"Agam Chaudhary","umar":"Arti Chaudhary","jenifer":"Kanishak Rajpal","harsh":"Kanishak Rajpal","sunny":"Agam Chaudhary","rajesh":"Umar Daraz","kanishak":"Agam Chaudhary","puru":"Kanishak Rajpal","jimmy":"Kanishak Rajpal","astitwa":"Abhishek Chaudhary","rishi":"Kanishak Rajpal","shobhan":"Kanishak Rajpal","kritika":"Arti Chaudhary","simran":"Agam Chaudhary","amit":"Agam Chaudhary","ayush_ag":"Abhishek Chaudhary","kunal":"Abhishek Chaudhary","aditya":"Abhishek Chaudhary","parteek":"Abhishek Chaudhary","sahil":"Umar Daraz","shubham":"Kanishak Rajpal","ayush":"Kanishak Rajpal"};
 
 const SEED_TASKS = {
   'Kritika':[{date:'2025-12-08',client:'Two99',people:'Arti Maam',status:'Completed',task:'Human Resources',subtask:'Job Posting',hours:'30 mins',due:'Same day',comments:'Paid Media Specialist job posted on Indeed'},{date:'2025-12-15',client:'Two99',people:'Agam Sir, Umar',status:'Completed',task:'Meetings',subtask:'Onsite',hours:'30-40 mins',due:'Same day',comments:'Meeting with Umar'},{date:'2025-12-16',client:'Two99',people:'Arti Maam',status:'Completed',task:'Human Resources',subtask:'Documentation',hours:'6 hrs',due:'Same day',comments:'December attendance'}],
@@ -3358,6 +3458,10 @@ function renderCelebrations() {
         <div class="cday">${e.day}</div>
         <div class="cmonth">${MONTHS_SHORT[celebMonth]}</div>
       </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;">
+        <button onclick="sendWish('${e.empId}','${e.type}')" style="background:${hasWished(e.empId,e.type)?'rgba(0,230,118,.12)':'var(--cyan-glow)'};border:1px solid ${hasWished(e.empId,e.type)?'rgba(0,230,118,.35)':'rgba(0,212,255,.3)'};border-radius:20px;padding:5px 13px;font-size:11px;font-weight:700;color:${hasWished(e.empId,e.type)?'var(--green)':'var(--cyan)'};cursor:pointer;white-space:nowrap;transition:all .2s;">${hasWished(e.empId,e.type)?'✓ Wished':'🎉 Wish'}</button>
+        <div style="font-size:10px;color:var(--text3);">${wishCount(e.empId,e.type)} wish${wishCount(e.empId,e.type)!==1?'es':''}</div>
+      </div>
     </div>`;
   }).join('');
 }
@@ -3925,6 +4029,346 @@ function sendLeaveEmail(leaveData) {
   saveEmails(allEmails);
   renderEmailFolders();
 }
+
+
+// ══════════════════════════════════════════
+// RAISE A TICKET
+// ══════════════════════════════════════════
+function getTickets(){return JSON.parse(localStorage.getItem('tickets')||'[]');}
+function saveTickets(a){localStorage.setItem('tickets',JSON.stringify(a));}
+
+function initTickets(){
+  renderTicketsList();
+  renderMyTickets();
+  const sel=document.getElementById('ticket-assignee');
+  if(sel&&sel.options.length<=1){
+    EMPLOYEES.filter(e=>e.id!==currentUser?.id&&e.email).forEach(e=>{
+      const o=document.createElement('option');
+      o.value=e.id;o.textContent=e.name+' — '+e.designation;
+      sel.appendChild(o);
+    });
+  }
+}
+
+function submitTicket(){
+  const title=document.getElementById('ticket-title').value.trim();
+  const desc=document.getElementById('ticket-desc').value.trim();
+  const aid=document.getElementById('ticket-assignee').value;
+  const priority=document.getElementById('ticket-priority').value;
+  const category=document.getElementById('ticket-category').value;
+  if(!title||!desc||!aid){showToast('Missing Fields','Please fill title, description and assignee.');return;}
+  const assignee=EMPLOYEES.find(e=>e.id===aid);
+  const now=new Date();
+  const tickets=getTickets();
+  const ticket={
+    id:'TKT-'+String(tickets.length+1).padStart(3,'0'),
+    title,desc,priority,category,
+    assignee_id:aid,assignee_name:assignee?.name||'',
+    raised_by:currentUser?.id,raised_by_name:currentUser?.name||'',
+    date:now.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),
+    time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
+    status:'Open',
+  };
+  tickets.unshift(ticket);saveTickets(tickets);
+  renderTicketsList();renderMyTickets();
+  addNotif('🎫','Ticket Raised',ticket.id+': '+title+' → '+assignee?.name,'Just now');
+  showToast('🎫 Ticket Raised',ticket.id+' assigned to '+assignee?.name);
+  document.getElementById('ticket-title').value='';
+  document.getElementById('ticket-desc').value='';
+  document.getElementById('ticket-assignee').value='';
+}
+
+function renderTicketsList(){
+  const tbody=document.getElementById('tickets-all-body');if(!tbody)return;
+  let list=getTickets();
+  const filt=document.getElementById('ticket-filter-status')?.value||'all';
+  const me=document.getElementById('ticket-filter-me')?.checked;
+  if(filt!=='all')list=list.filter(t=>t.status===filt);
+  if(me)list=list.filter(t=>t.assignee_id===currentUser?.id||t.raised_by===currentUser?.id);
+  if(!list.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:28px">No tickets found. Raise one using the form.</td></tr>';return;}
+  const pc={High:'var(--red)',Medium:'var(--amber)',Low:'var(--green)'};
+  const sc={Open:'var(--cyan)',Inprogress:'var(--amber)',Resolved:'var(--green)',Closed:'var(--text3)'};
+  tbody.innerHTML=list.map(t=>`<tr>
+    <td style="font-family:monospace;font-size:12px;color:var(--cyan);font-weight:700">${t.id}</td>
+    <td style="font-size:12.5px;font-weight:600;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.title}">${t.title}</td>
+    <td style="font-size:11px;color:var(--text2)">${t.category}</td>
+    <td><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${pc[t.priority]||'var(--text3)'}22;color:${pc[t.priority]||'var(--text3)'}">${t.priority}</span></td>
+    <td style="font-size:12px">${t.raised_by_name}</td>
+    <td style="font-size:12px;color:var(--cyan)">${t.assignee_name}</td>
+    <td><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${sc[t.status]||'var(--text3)'}22;color:${sc[t.status]||'var(--text3)'}">${t.status}</span></td>
+    <td style="font-size:11px;color:var(--text2);white-space:nowrap">${t.date}</td>
+    <td><button onclick="cycleTicket('${t.id}')" style="font-size:10px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--text2)">Next →</button></td>
+  </tr>`).join('');
+}
+
+function renderMyTickets(){
+  const mine=getTickets().filter(t=>t.raised_by===currentUser?.id||t.assignee_id===currentUser?.id);
+  const openEl=document.getElementById('tickets-open-count');
+  const inpEl=document.getElementById('tickets-inprog-count');
+  if(openEl)openEl.textContent=mine.filter(t=>t.status==='Open').length;
+  if(inpEl)inpEl.textContent=mine.filter(t=>t.status==='Inprogress').length;
+}
+
+function cycleTicket(id){
+  const tickets=getTickets();
+  const t=tickets.find(t=>t.id===id);if(!t)return;
+  const s=['Open','Inprogress','Resolved','Closed'];
+  t.status=s[(s.indexOf(t.status)+1)%s.length];
+  saveTickets(tickets);renderTicketsList();renderMyTickets();
+  showToast('🎫 Status Updated',id+' → '+t.status);
+}
+
+// ══════════════════════════════════════════
+// SALARY SLIPS
+// ══════════════════════════════════════════
+const SLIP_MONTHS=['April 2026','March 2026','February 2026','January 2026','December 2025','November 2025'];
+let currentSlipMonth='';
+
+function initSalarySlips(){
+  const el=document.getElementById('salary-slip-list');if(!el)return;
+  el.innerHTML=SLIP_MONTHS.map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+      <div style="width:42px;height:42px;background:rgba(0,212,255,.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">💰</div>
+      <div style="flex:1;">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:2px;">Salary Slip — ${m}</div>
+        <div style="font-size:11px;color:var(--text2);">PDF ready · Two99 Ecommerce Pvt. Ltd.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="viewSlip('${m}')" class="btn-outline" style="font-size:12px;padding:7px 12px;">👁 View</button>
+        <button onclick="downloadSlip('${m}')" class="btn-primary" style="font-size:12px;padding:7px 12px;">⬇ Download</button>
+      </div>
+    </div>`).join('');
+}
+
+function buildSlipHTML(month,emp){
+  const base=35000,hra=Math.round(base*.4),special=Math.round(base*.1),conv=1600,med=1250;
+  const gross=base+hra+special+conv+med;
+  const pf=Math.round(base*.12),esic=Math.round(gross*.0075),pt=200;
+  const ded=pf+esic+pt,net=gross-ded;
+  const fmt=n=>n.toLocaleString('en-IN',{minimumFractionDigits:2});
+  const empNo=String(EMPLOYEES.findIndex(e=>e.id===emp.id)+1).padStart(3,'0');
+  const doj=emp.doj?new Date(emp.doj).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'—';
+  return `<div style="font-family:'DM Sans',Arial,sans-serif;background:#fff;color:#111;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12);">
+  <div style="background:#080e1c;padding:22px 30px;display:flex;align-items:center;justify-content:space-between;">
+    <div><div style="color:#fff;font-size:24px;font-weight:900;letter-spacing:2px;">TWO99<span style="color:#00d4ff">®</span></div><div style="color:#8fa5c5;font-size:11px;margin-top:2px;">Two99 Ecommerce Private Limited</div></div>
+    <div style="text-align:right;"><div style="color:#00d4ff;font-size:15px;font-weight:800;letter-spacing:1px;">SALARY SLIP</div><div style="color:#8fa5c5;font-size:12px;margin-top:3px;">${month}</div></div>
+  </div>
+  <div style="background:#f0f6ff;padding:16px 30px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;border-bottom:2px solid #e0ecff;">
+    ${[['Employee Name',emp.name],['Employee ID','EMP-'+empNo],['Designation',emp.designation],['Reporting Manager',emp.rm||'—'],['Date of Joining',doj],['Pay Period',month],['Bank Account','XXXX XXXX 1234'],['PAN','XXXXX0000X'],['Working Days','26 / 26']].map(([l,v])=>`<div><div style="font-size:9px;font-weight:700;color:#667;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">${l}</div><div style="font-size:12.5px;font-weight:600;">${v}</div></div>`).join('')}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;padding:20px 30px;gap:0;">
+    <div style="padding-right:24px;border-right:1px solid #e0ecff;">
+      <div style="font-size:10px;font-weight:800;color:#00aacc;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">💰 Earnings</div>
+      ${[['Basic Salary',base],['HRA (40%)',hra],['Special Allowance',special],['Conveyance Allowance',conv],['Medical Allowance',med]].map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f6ff;font-size:12.5px;"><span style="color:#555;">${l}</span><span style="font-weight:600;">₹${fmt(v)}</span></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:11px 0 4px;font-size:13.5px;font-weight:800;border-top:2px solid #111;margin-top:6px;"><span>Gross Earnings</span><span style="color:#00aacc;">₹${fmt(gross)}</span></div>
+    </div>
+    <div style="padding-left:24px;">
+      <div style="font-size:10px;font-weight:800;color:#ff5252;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">📉 Deductions</div>
+      ${[['PF (12% Basic)',pf],['ESIC (0.75% Gross)',esic],['Professional Tax',pt]].map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f6ff;font-size:12.5px;"><span style="color:#555;">${l}</span><span style="font-weight:600;">₹${fmt(v)}</span></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:11px 0 4px;font-size:13.5px;font-weight:800;border-top:2px solid #111;margin-top:6px;"><span>Total Deductions</span><span style="color:#ff5252;">₹${fmt(ded)}</span></div>
+    </div>
+  </div>
+  <div style="margin:0 30px 22px;background:#080e1c;border-radius:10px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;">
+    <div><div style="color:#8fa5c5;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;">NET PAY — Take Home</div><div style="color:#8fa5c5;font-size:11px;">In Words: ${netInWords(net)}</div></div>
+    <div style="font-size:28px;font-weight:900;color:#00d4ff;font-family:Arial,sans-serif;">₹${fmt(net)}</div>
+  </div>
+  <div style="padding:12px 30px;background:#f0f6ff;border-top:1px solid #e0ecff;display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-size:10px;color:#888;">This is a computer-generated salary slip and does not require a physical signature.</div>
+    <div style="font-size:10px;color:#888;">Generated: ${new Date().toLocaleDateString('en-IN')}</div>
+  </div>
+</div>`;
+}
+
+function netInWords(n){
+  const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  if(n===0)return'Zero Rupees Only';
+  const h=Math.floor(n/1000),th=Math.floor((n%1000)/100),t=Math.floor((n%100)/10),o=n%10;
+  let w='';
+  if(h){w+=a[h]+' Thousand ';}
+  if(th){w+=a[th]+' Hundred ';}
+  if(n%100<20&&n%100>0){w+=a[n%100]+' ';}
+  else{if(t)w+=b[t]+' ';if(o)w+=a[o]+' ';}
+  return w.trim()+' Rupees Only';
+}
+
+function viewSlip(month){
+  if(!currentUser)return;
+  currentSlipMonth=month;
+  document.getElementById('salary-modal-content').innerHTML=buildSlipHTML(month,currentUser);
+  document.getElementById('salary-modal').classList.add('open');
+}
+
+function downloadSlipFromModal(){
+  if(currentSlipMonth&&currentUser)downloadSlip(currentSlipMonth);
+}
+
+function downloadSlip(month){
+  if(!currentUser)return;
+  const html=buildSlipHTML(month,currentUser);
+  const page=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:20px;background:#e8edf5;font-family:'DM Sans',Arial,sans-serif;}</style></head><body>${html}</body></html>`;
+  const blob=new Blob([page],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='SalarySlip_'+currentUser.name.replace(/\s+/g,'_')+'_'+month.replace(/\s+/g,'_')+'.html';
+  a.click();
+  showToast('⬇ Downloaded','Salary slip for '+month);
+}
+
+// ══════════════════════════════════════════
+// WHO'S ON LEAVE
+// ══════════════════════════════════════════
+let onLeaveTab='week';
+
+function switchOnLeaveTab(tab,el){
+  onLeaveTab=tab;
+  document.querySelectorAll('#onleave-tabs .tab-pill').forEach(p=>p.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderOnLeaveThisWeek();
+}
+
+function renderOnLeaveThisWeek(){
+  const el=document.getElementById('on-leave-week');if(!el)return;
+  const today=new Date();
+  const day=today.getDay();
+  const mon=new Date(today);mon.setDate(today.getDate()-(day===0?6:day-1));
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const toStr=d=>d.toISOString().slice(0,10);
+  const monS=toStr(mon),sunS=toStr(sun),todS=toStr(today);
+  const monthS=toStr(new Date(today.getFullYear(),today.getMonth(),1));
+  const monthE=toStr(new Date(today.getFullYear(),today.getMonth()+1,0));
+
+  // Update week label
+  const wlEl=document.getElementById('onleave-week-label');
+  if(wlEl)wlEl.textContent=mon.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' – '+sun.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+
+  // Gather all leaves
+  const onLeave=[];
+  EMPLOYEES.forEach(emp=>{
+    const empLeaves=JSON.parse(localStorage.getItem('leaves_'+emp.id)||'[]');
+    empLeaves.forEach(lv=>{
+      if(lv.status==='Rejected')return;
+      let include=false;
+      if(onLeaveTab==='today')include=(lv.from<=todS&&lv.to>=todS);
+      else if(onLeaveTab==='week')include=(lv.to>=monS&&lv.from<=sunS);
+      else if(onLeaveTab==='month')include=(lv.to>=monthS&&lv.from<=monthE);
+      else include=(lv.from>=todS);
+      if(include)onLeave.push({emp,lv});
+    });
+  });
+
+  if(!onLeave.length){
+    el.innerHTML='<div class="empty-state" style="padding:36px 16px"><div class="empty-icon">✅</div><p>No one is on leave '+
+      (onLeaveTab==='today'?'today':onLeaveTab==='week'?'this week':onLeaveTab==='month'?'this month':'upcoming')+'.</p></div>';
+    return;
+  }
+
+  const typeBadge={EL:'rgba(0,212,255,.12)|var(--cyan)',SL:'rgba(255,82,82,.12)|var(--red)',BL:'rgba(179,136,255,.12)|var(--purple)'};
+  el.innerHTML=onLeave.map(({emp,lv})=>{
+    const savedPhoto=localStorage.getItem('photo_'+emp.id);
+    const av=savedPhoto?`<img src="${savedPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`:(emp.name.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase());
+    const [bg,col]=(typeBadge[lv.type]||'rgba(255,171,0,.12)|var(--amber)').split('|');
+    return `<div style="display:flex;align-items:center;gap:13px;padding:13px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;">
+      <div class="avatar" style="width:40px;height:40px;font-size:12px;flex-shrink:0;">${av}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:2px;">${emp.name}</div>
+        <div style="font-size:11px;color:var(--text2);">${emp.designation} · <span style="color:var(--cyan);">RM: ${emp.rm||'—'}</span></div>
+        <div style="font-size:11px;margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="background:${bg};color:${col};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;">${lv.type}</span>
+          <span style="color:var(--text2);">📅 ${lv.from} → ${lv.to}</span>
+          <span style="color:var(--amber);">⏱ ${lv.days} day(s)</span>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:var(--text3);flex-shrink:0;">Cover:<br><strong style="color:var(--text2);">${lv.cover||'—'}</strong></div>
+      <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:${lv.status==='Pending'?'rgba(255,171,0,.12)':'rgba(0,230,118,.12)'};color:${lv.status==='Pending'?'var(--amber)':'var(--green)'};">${lv.status}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderDashOnLeave(){
+  const el=document.getElementById('dash-on-leave');if(!el)return;
+  const today=new Date(),day=today.getDay();
+  const mon=new Date(today);mon.setDate(today.getDate()-(day===0?6:day-1));
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const monS=mon.toISOString().slice(0,10),sunS=sun.toISOString().slice(0,10);
+  const onLeave=[];
+  EMPLOYEES.forEach(emp=>{
+    JSON.parse(localStorage.getItem('leaves_'+emp.id)||'[]').forEach(lv=>{
+      if(lv.status!=='Rejected'&&lv.to>=monS&&lv.from<=sunS)onLeave.push({emp,lv});
+    });
+  });
+  if(!onLeave.length){el.innerHTML='<div style="padding:12px 16px;color:var(--text3);font-size:13px;text-align:center;">✅ No one is on leave this week.</div>';return;}
+  el.innerHTML=onLeave.slice(0,4).map(({emp,lv})=>{
+    const av=emp.name.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--card2);border:1px solid var(--border);border-radius:9px;margin-bottom:6px;">
+      <div class="avatar" style="width:32px;height:32px;font-size:10px;flex-shrink:0;">${av}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:12.5px;font-weight:600;">${emp.name}</div><div style="font-size:11px;color:var(--amber);">🌴 ${lv.type} · ${lv.from} to ${lv.to}</div></div>
+      <span style="font-size:10px;color:var(--text3);">${lv.status}</span>
+    </div>`;
+  }).join('') + (onLeave.length>4?`<div style="font-size:11px;color:var(--text3);text-align:center;padding:6px;">+${onLeave.length-4} more — <span onclick="showPage('onleave',null)" style="color:var(--cyan);cursor:pointer;">View all</span></div>`:'');
+}
+
+// ══════════════════════════════════════════
+// BIRTHDAY / ANNIVERSARY WISHES
+// ══════════════════════════════════════════
+function getWishes(){return JSON.parse(localStorage.getItem('wishes')||'[]');}
+function saveWishes(a){localStorage.setItem('wishes',JSON.stringify(a));}
+
+function sendWish(empId,type){
+  if(!currentUser)return;
+  const emp=EMPLOYEES.find(e=>e.id===empId);if(!emp)return;
+  const wKey=currentUser.id+'_'+empId+'_'+type+'_'+new Date().getFullYear();
+  const wishes=getWishes();
+  if(wishes.find(w=>w.key===wKey)){showToast('Already Wished!','You already wished '+emp.name.split(' ')[0]+' this year.');return;}
+  const msgs={
+    bday:['Happy Birthday! 🎂 Wishing you a wonderful day and a fantastic year ahead!','Many happy returns of the day! 🎉 Hope your birthday is as amazing as you are!','Happy Birthday! 🎈 May this year bring you joy, success, and great things!'],
+    anni:['Happy Work Anniversary! 🎊 Thank you for your incredible contribution to Two99!','Congratulations on another milestone at Two99! 🌟 Your dedication inspires us all!','Happy Anniversary! 🎊 Grateful to have you on the team. Here\'s to many more!'],
+    marr:['Happy Anniversary! 💍 Wishing you and your family all the love and happiness!','Congratulations on your anniversary! 💕 Wishing you a lifetime of beautiful moments!','Happy Anniversary! 💍 May your bond grow stronger and more beautiful every year!'],
+  };
+  const msgArr=msgs[type]||msgs.bday;
+  const msg=msgArr[Math.floor(Math.random()*msgArr.length)];
+  wishes.push({id:'w_'+Date.now(),key:wKey,from_id:currentUser.id,from_name:currentUser.name,to_id:empId,to_name:emp.name,type,msg,date:todayStr()});
+  saveWishes(wishes);
+  const icon=type==='bday'?'🎂':type==='anni'?'🎊':'💍';
+  showToast(icon+' Wish Sent!','Your wish to '+emp.name.split(' ')[0]+' has been sent!');
+  addNotif(icon,'Wished '+emp.name.split(' ')[0],msg.slice(0,60)+'...','Just now');
+  renderCelebrations();
+}
+
+function hasWished(empId,type){
+  if(!currentUser)return false;
+  const wKey=currentUser.id+'_'+empId+'_'+type+'_'+new Date().getFullYear();
+  return getWishes().some(w=>w.key===wKey);
+}
+
+function wishCount(empId,type){
+  return getWishes().filter(w=>w.to_id===empId&&w.type===type&&w.date.includes(String(new Date().getFullYear()))).length;
+}
+
+// ══════════════════════════════════════════
+// PATCH showPage — single clean handler
+// ══════════════════════════════════════════
+const _BASE_PAGE_INFO_EXTRA = {
+  tickets:['Raise a Ticket','Submit and track team tickets & grievances'],
+  salary:['Salary Slips','View and download your monthly salary slips'],
+  onleave:["Who's On Leave",'See team leave status this week'],
+};
+Object.assign(PAGE_INFO, _BASE_PAGE_INFO_EXTRA);
+
+const _origSP2 = showPage;
+showPage = function(page, navEl){
+  _origSP2(page, navEl);
+  if(page==='tickets') initTickets();
+  if(page==='salary') initSalarySlips();
+  if(page==='onleave') renderOnLeaveThisWeek();
+};
+
+// Patch doLogin to render on-leave widget on dashboard
+const _origDL2 = doLogin;
+doLogin = function(){
+  _origDL2();
+  setTimeout(()=>{renderDashOnLeave();},600);
+};
 
 // ═══════════════════ START ═══════════════════
 init();
